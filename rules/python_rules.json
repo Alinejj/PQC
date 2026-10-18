@@ -1,0 +1,14 @@
+[
+  {"id": "RSA-1", "pattern": "rsa\\.generate_private_key|RSA\\.generate|RSA\\.construct", "algorithm": "RSA", "category": "asymmetric", "status": "vulnerable", "replacement": "ML-KEM (encryption) / ML-DSA (signatures), hybrid with classical during transition"},
+  {"id": "ECDSA-1", "pattern": "ec\\.generate_private_key|ECDSA\\(|SECP256R1|SECP384R1", "algorithm": "ECDSA/ECDH", "category": "asymmetric", "status": "vulnerable", "replacement": "ML-DSA (signatures) / ML-KEM (key exchange)"},
+  {"id": "ED25519-1", "pattern": "Ed25519PrivateKey|Ed25519PublicKey", "algorithm": "Ed25519", "category": "asymmetric", "status": "vulnerable", "replacement": "ML-DSA"},
+  {"id": "X25519-1", "pattern": "X25519PrivateKey|X25519PublicKey", "algorithm": "X25519", "category": "key_exchange", "status": "vulnerable", "replacement": "Hybrid X25519MLKEM768"},
+  {"id": "DH-1", "pattern": "dh\\.generate_parameters|DiffieHellman", "algorithm": "Diffie-Hellman", "category": "key_exchange", "status": "vulnerable", "replacement": "ML-KEM"},
+  {"id": "MD5-1", "pattern": "hashlib\\.md5|hashes\\.MD5", "algorithm": "MD5", "category": "hash", "status": "weak", "replacement": "SHA-256 or SHA3-256"},
+  {"id": "SHA1-1", "pattern": "hashlib\\.sha1|hashes\\.SHA1\\b", "algorithm": "SHA-1", "category": "hash", "status": "weak", "replacement": "SHA-256 or SHA3-256"},
+  {"id": "3DES-1", "pattern": "TripleDES|DES3|DES\\.new", "algorithm": "3DES/DES", "category": "symmetric", "status": "weak", "replacement": "AES-256-GCM"},
+  {"id": "RC4-1", "pattern": "ARC4|RC4", "algorithm": "RC4", "category": "symmetric", "status": "weak", "replacement": "AES-256-GCM"},
+  {"id": "AES-CBC-1", "pattern": "modes\\.CBC|AES\\.MODE_CBC", "algorithm": "AES-CBC", "category": "symmetric", "status": "transitional", "replacement": "AES-256-GCM (authenticated encryption)"},
+  {"id": "AES-ECB-1", "pattern": "modes\\.ECB|AES\\.MODE_ECB", "algorithm": "AES-ECB", "category": "symmetric", "status": "weak", "replacement": "AES-256-GCM"},
+  {"id": "HYBRID-KEM-1", "pattern": "X25519MLKEM768|SecP256r1MLKEM768|ML-?KEM|kyber", "algorithm": "ML-KEM / hybrid KEM", "category": "key_exchange", "status": "safe", "replacement": "None needed (already post-quantum)"}
+]
