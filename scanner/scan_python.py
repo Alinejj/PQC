@@ -5,6 +5,8 @@ def scan_file(path, rules):
     findings = []
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
         for line_number, line in enumerate(f, start=1):
+            if line.lstrip().startswith("#"):
+                continue
             for rule in rules:
                 match = rule.regex.search(line)
                 if match:
