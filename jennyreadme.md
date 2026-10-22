@@ -20,16 +20,15 @@ pip install cryptography
 From the project root:
 
 ```
-python classical.py
 python main.py classical.py
 ```
 
-Nothing is outputted in this file when executed.
+classical.py does not print anything when run on its own: it is a set of functions for the demo app and the benchmark to import, and the docstring at the top of the file lists which function fills each benchmark slot. The command above runs the scanner on it; its output is described under Results so far.
 
 ## Project layout
 
 ```
-classical.py               AES-GCM, RSA and ECDSA functions, plus the demo
+classical.py               AES-GCM, RSA and ECDSA functions
     aes_keygen             makes a 256-bit AES key
     aes_encrypt            locks a message, returns (nonce, ciphertext)
     aes_decrypt            unlocks it, raises InvalidTag if anything was changed
@@ -57,7 +56,7 @@ Both verify functions return True or False instead of raising an exception, whic
 
 ## Results so far
 
-Running the scanner on this file gives 12 findings. Both of the scanner's passes find the same 12, and nothing is picked up from comments, docstrings or the demo's printed text.
+Running the scanner on this file gives 12 findings. Both of the scanner's passes find the same 12, and nothing is picked up from comments or docstrings.
 
 | Algorithm | Status | Found in |
 |---|---|---|
@@ -68,7 +67,7 @@ Running the scanner on this file gives 12 findings. Both of the scanner's passes
 
 This is the result the module was written to show. RSA and ECDSA are flagged as vulnerable even though they are used correctly, with modern padding and key sizes, while AES-256-GCM and SHA-256 are marked safe.
 
-The benchmark does not call classical.py yet; the classical and PQC parts of the demo app will be plugged into it once they are ready. To check that classical.py is ready, the benchmark's RSA-2048 and RSA-3072 (OAEP), RSA-2048 and RSA-3072 (PSS) and ECDSA P-256 entries were rebuilt from its functions, as in the example above, and run through the benchmark's own runner. All five passed the runner's correctness checks: both sides end up with the same secret, a real signature verifies, and a signature fails to verify against a changed message. The sizes match the benchmark's own code:
+The benchmark does not call classical.py yet; the classical and PQC parts of the demo app will be plugged into it once they are ready. To check that classical.py is ready, the benchmark's RSA-2048 and RSA-3072 (OAEP), RSA-2048 and RSA-3072 (PSS) and ECDSA P-256 entries were rebuilt from its functions, using the slots listed in its docstring, and run through the benchmark's own runner. All five passed the runner's correctness checks: both sides end up with the same secret, a real signature verifies, and a signature fails to verify against a changed message. The sizes match the benchmark's own code:
 
 | Algorithm | Public key (bytes) | Ciphertext or signature (bytes) |
 |---|---|---|

@@ -27,7 +27,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 # AES ---------------------------------------------------------------
 
-def aes_aes_(bits=256):
+def aes_keygen(bits=256):
     return AESGCM.generate_key(bit_length=bits)
  
 def aes_encrypt(key, plaintext):
@@ -47,13 +47,13 @@ OAEP = padding.OAEP(mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256()
 PSS = padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.DIGEST_LENGTH)
  
  
-def rsa_aes_(bits=3072):
+def rsa_keygen(bits=3072):
     """Make an RSA key pair. Returns (private_key, public_key)."""
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=bits)
     return private_key, private_key.public_key()
  
 def rsa_encap(public_key):
-    aes_key = aes_aes_()
+    aes_key = aes_keygen()
     locked_key = public_key.encrypt(aes_key, OAEP)
     return locked_key, aes_key
  
@@ -75,7 +75,7 @@ def rsa_public_bytes(public_key):
 
 # ECDSA ---------------------------------------------------------------
 
-def ecdsa_aes_():
+def ecdsa_keygen():
     private_key = ec.generate_private_key(ec.SECP256R1())
     return private_key, private_key.public_key()
  
