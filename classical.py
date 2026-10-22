@@ -40,7 +40,6 @@ def aes_decrypt(key, nonce, ciphertext):
     """Unlock a message. Raises InvalidTag if anything was changed."""
     return AESGCM(key).decrypt(nonce, ciphertext, None)
  
- 
 # RSA ---------------------------------------------------------------
  
 OAEP = padding.OAEP(mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
