@@ -3,7 +3,8 @@ import oqs
 kemalg = "ML-KEM-512"   # ML-KEM algorithm in use
 
 
-def generate_keypair(alg=kemalg):  # generate a keypair for the specified KEM algorithm
+# generate a keypair for the specified KEM algorithm
+def generate_kem_keypair(alg=kemalg):
     with oqs.KeyEncapsulation(alg) as kem:
 
         public_key = kem.generate_keypair()
