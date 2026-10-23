@@ -85,4 +85,4 @@ A quick 10-run test suggests speed is not the problem. ML-KEM and ML-DSA run in 
 
 ## Known limitations
 
-Timings depend on the machine, so they should only be compared within the same run, not across different computers. Python adds some overhead to every call, which matters more for the fastest operations. The benchmark currently uses its own implementation of each algorithm through the `cryptography` library rather than the demo app's code; the classical and PQC parts of the demo app will be plugged in once they are ready. Symmetric algorithms such as AES are not benchmarked yet.
+Timings depend on the machine, so they should only be compared within the same run, not across different computers. Python adds some overhead to every call, which matters more for the fastest operations. The RSA and ECDSA entries now run the demo app's `classical.py`, but ECDH, Ed25519, ML-KEM and ML-DSA still use the benchmark's own code; the PQC part of the demo app will be plugged in once it is ready. Symmetric algorithms such as AES are not benchmarked yet.

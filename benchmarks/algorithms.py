@@ -1,14 +1,11 @@
-import os
-
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, ed25519, mldsa, mlkem, padding, rsa, x25519
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec, ed25519, mldsa, mlkem, x25519
 
+import classical
 from benchmarks.schemes import KEMScheme, SigScheme
 
 RAW = (serialization.Encoding.Raw, serialization.PublicFormat.Raw)
-OAEP = padding.OAEP(mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
-PSS = padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.DIGEST_LENGTH)
 
 
 def _keypair(private_key):
@@ -17,10 +14,6 @@ def _keypair(private_key):
 
 def _raw(public_key):
     return public_key.public_bytes(*RAW)
-
-
-def _rsa_bytes(public_key):
-    return public_key.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.PKCS1)
 
 
 def _p256_bytes(public_key):
@@ -39,20 +32,18 @@ def _checked(verify_fn):
 
 
 # Classical key exchange is framed as a KEM so it lines up with ML-KEM:
-# RSA-OAEP encrypts a fresh 32-byte secret (key transport), and ECDH uses an
+# RSA-OAEP encrypts a fresh 32-byte AES key (key transport), and ECDH uses an
 # ephemeral key pair whose public key plays the role of the ciphertext.
+# RSA and ECDSA come from the demo app's classical.py.
 
 def _rsa_kem(bits):
-    def encaps(pk):
-        secret = os.urandom(32)
-        return pk.encrypt(secret, OAEP), secret
     return KEMScheme(
         name=f"RSA-{bits} (OAEP)",
         family="classical",
-        keygen=lambda: _keypair(rsa.generate_private_key(public_exponent=65537, key_size=bits)),
-        encaps=encaps,
-        decaps=lambda sk, ct: sk.decrypt(ct, OAEP),
-        public_key_bytes=_rsa_bytes,
+        keygen=lambda: classical.rsa_keygen(bits),
+        encaps=classical.rsa_encap,
+        decaps=classical.rsa_decap,
+        public_key_bytes=classical.rsa_public_bytes,
     )
 
 
@@ -107,10 +98,10 @@ def _rsa_sig(bits):
     return SigScheme(
         name=f"RSA-{bits} (PSS)",
         family="classical",
-        keygen=lambda: _keypair(rsa.generate_private_key(public_exponent=65537, key_size=bits)),
-        sign=lambda sk, msg: sk.sign(msg, PSS, hashes.SHA256()),
-        verify=_checked(lambda pk, sig, msg: pk.verify(sig, msg, PSS, hashes.SHA256())),
-        public_key_bytes=_rsa_bytes,
+        keygen=lambda: classical.rsa_keygen(bits),
+        sign=classical.rsa_sign,
+        verify=classical.rsa_verify,
+        public_key_bytes=classical.rsa_public_bytes,
     )
 
 
@@ -129,10 +120,8 @@ SIG_SCHEMES = [
     _rsa_sig(2048),
     _rsa_sig(3072),
     SigScheme("ECDSA P-256", "classical",
-              lambda: _keypair(ec.generate_private_key(ec.SECP256R1())),
-              lambda sk, msg: sk.sign(msg, ec.ECDSA(hashes.SHA256())),
-              _checked(lambda pk, sig, msg: pk.verify(sig, msg, ec.ECDSA(hashes.SHA256()))),
-              _p256_bytes),
+              classical.ecdsa_keygen, classical.ecdsa_sign,
+              classical.ecdsa_verify, classical.ecdsa_public_bytes),
     SigScheme("Ed25519", "classical",
               lambda: _keypair(ed25519.Ed25519PrivateKey.generate()),
               lambda sk, msg: sk.sign(msg),
