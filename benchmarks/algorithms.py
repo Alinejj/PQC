@@ -1,3 +1,8 @@
+import ctypes.util
+import importlib.util
+import os
+from pathlib import Path
+
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519, mldsa, mlkem, x25519
@@ -6,6 +11,24 @@ import classical
 from benchmarks.schemes import KEMScheme, SigScheme
 
 RAW = (serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+
+
+# Importing oqs without the liboqs C library makes it try to download and
+# build liboqs, which fails without CMake and a C compiler. So check for the
+# library first, in the same places liboqs-python looks for it.
+def _liboqs_installed():
+    if importlib.util.find_spec("oqs") is None:
+        return False
+    return ("OQS_INSTALL_PATH" in os.environ
+            or (Path.home() / "_oqs").exists()
+            or ctypes.util.find_library("oqs") is not None)
+
+
+# ML-KEM and ML-DSA come from the demo app's PQC_service when liboqs is
+# installed, and from the cryptography library otherwise.
+PQC_BACKEND = "liboqs" if _liboqs_installed() else "cryptography"
+if PQC_BACKEND == "liboqs":
+    from PQC_service import mldsa as pqc_mldsa, mlkem as pqc_mlkem
 
 
 def _keypair(private_key):
@@ -67,6 +90,9 @@ def _p256_decaps(sk, ct):
 
 
 def _mlkem(level, key_class):
+    if PQC_BACKEND == "liboqs":
+        return _mlkem_liboqs(level)
+
     def encaps(pk):
         shared_secret, ciphertext = pk.encapsulate()
         return ciphertext, shared_secret
@@ -77,6 +103,41 @@ def _mlkem(level, key_class):
         encaps=encaps,
         decaps=lambda sk, ct: sk.decapsulate(ct),
         public_key_bytes=_raw,
+    )
+
+
+# PQC_service returns (public_key, secret_key) as bytes and takes arguments in
+# a different order, so these adapt it to the KEMScheme and SigScheme shapes.
+
+def _mlkem_liboqs(level):
+    alg = f"ML-KEM-{level}"
+
+    def keygen():
+        pk, sk = pqc_mlkem.generate_kem_keypair(alg)
+        return sk, pk
+    return KEMScheme(
+        name=alg,
+        family="pqc",
+        keygen=keygen,
+        encaps=lambda pk: pqc_mlkem.encapsulate(pk, alg),
+        decaps=lambda sk, ct: pqc_mlkem.decapsulate(ct, sk, alg),
+        public_key_bytes=lambda pk: pk,
+    )
+
+
+def _mldsa_liboqs(level):
+    alg = f"ML-DSA-{level}"
+
+    def keygen():
+        pk, sk = pqc_mldsa.generate_dsa_keypair(alg)
+        return sk, pk
+    return SigScheme(
+        name=alg,
+        family="pqc",
+        keygen=keygen,
+        sign=lambda sk, msg: pqc_mldsa.sign_message(msg, sk, alg),
+        verify=lambda pk, sig, msg: pqc_mldsa.verify_signature(msg, sig, pk, alg),
+        public_key_bytes=lambda pk: pk,
     )
 
 
@@ -106,6 +167,8 @@ def _rsa_sig(bits):
 
 
 def _mldsa(level, key_class):
+    if PQC_BACKEND == "liboqs":
+        return _mldsa_liboqs(level)
     return SigScheme(
         name=f"ML-DSA-{level}",
         family="pqc",
