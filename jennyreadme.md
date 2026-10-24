@@ -1,88 +1,100 @@
-# PQC-Ready: Classical Cryptography
+# PQC-Ready: Classical Cryptography for the Demo App
 
 CS4389 Data and Application Security, final project (Category 13, Post-Quantum Cryptography).
 
-This module is the classical half of the demo application. It implements AES-GCM, RSA, and ECDSA with the `cryptography` library. It provides classical security functions (sending an encrypted message and signing data) and gives the scanner classical cryptography to find.
+This module is the classical half of the demo application. It implements AES-GCM, RSA and ECDSA with the `cryptography` package, and it serves three purposes in the project: it provides the classical security functions for the demo (sending an encrypted message and signing data), it is the classical side that the benchmark compares ML-KEM and ML-DSA against, and it gives the scanner real, working classical cryptography to find.
 
 
 ## Why this exists
 
-Shor's algorithm breaks widely used public-key cryptography, including RSA and algorithms like ECDSA. ML-KEM takes over RSA's job of delivering keys and ML-DSA takes over digital signatures. The scanner shows that even well implemented classical cryptography remains vulnerable to quantum attacks, since the vulnerability lies in the algorithm rather than the implementation. Once a key exchange is complete, symmetric algorithms like AES are used to encrypt the actual message. Unlike public-key algorithms, AES is expected to stay secure against quantum computers.
+RSA and elliptic-curve algorithms such as ECDSA are the public-key cryptography that Shor's algorithm breaks, so they are what a post-quantum migration replaces: ML-KEM takes over RSA's job of delivering keys, and ML-DSA takes over signing. For the comparison to be fair, the classical side has to be built the way a careful developer would build it today, with modern padding, authenticated encryption and fresh random values. Then any difference the project measures comes from the algorithms themselves rather than from implementation mistakes, and the scanner's findings show that even well-built classical cryptography is quantum-vulnerable.
+
+AES is included because both sides need it. A key exchange, classical or post-quantum, only delivers a shared secret; AES is what actually encrypts the message with that secret. AES is not replaced in the migration, since 256-bit AES keys are expected to stay secure against quantum computers.
 
 ## How to run
 
-The only dependency is the `cryptography` package. It was tested on Python 3.13 on Windows with `cryptography` 50.0.2.
+The only dependency is the `cryptography` package. The team uses version 50 or newer because the benchmark needs its ML-KEM and ML-DSA support. This module was tested with Python 3.13 and cryptography 50.0.1.
 
 ```
 pip install cryptography
 ```
 
-From the project root:
-
-```
-python main.py classical.py
-```
-
-classical.py does not print anything when run on its own: it is a set of functions for the demo app and the benchmark to import, and the docstring at the top of the file lists which function fills each benchmark slot. The command above runs the scanner on it; its output is described under Results so far.
-
 ## Project layout
+             
+
+## What's implemented
+
+| Algorithm | Functions | Job | Settings |
+|---|---|---|---|
+| AES-GCM | `aes_keygen`, `aes_encrypt`, `aes_decrypt` | Encrypts the actual message | 256-bit key by default, a fresh random 12-byte nonce per message, 16-byte authentication tag |
+| RSA-OAEP | `rsa_keygen`, `rsa_encaps`, `rsa_decaps` | Delivers a fresh AES key to the receiver | 2048 or 3072 bits (default 3072), public exponent 65537, OAEP with SHA-256 |
+| RSA-PSS | `rsa_keygen`, `rsa_sign`, `rsa_verify` | Signs messages | PSS with SHA-256, salt length equal to the hash length |
+| ECDSA | `ecdsa_keygen`, `ecdsa_sign`, `ecdsa_verify` | Signs messages | P-256 curve, SHA-256 |
+
+`rsa_public_bytes` and `ecdsa_public_bytes` return a public key as bytes so its size can be measured: PKCS#1 DER for RSA and an uncompressed point for P-256, the same formats the benchmark uses.
+
+## Function shapes
+
+The RSA and ECDSA functions follow the `KEMScheme` and `SigScheme` shapes in `benchmarks/schemes.py`, so the benchmark can call them directly. The AES functions are not part of the benchmark. Every function in the module, by its exact name:
 
 ```
-classical.py               AES-GCM, RSA and ECDSA functions
-    aes_keygen             makes a 256-bit AES key
-    aes_encrypt            locks a message, returns (nonce, ciphertext)
-    aes_decrypt            unlocks it, raises InvalidTag if anything was changed
-    rsa_keygen             makes an RSA key pair, 3072 bits unless given a size
-    rsa_encap              locks a fresh AES key with someone's RSA public key
-    rsa_decap              unlocks that AES key with the RSA private key
-    rsa_sign               signs a message with RSA-PSS
-    rsa_verify             checks an RSA-PSS signature, returns True or False
-    ecdsa_keygen           makes an ECDSA key pair on the P-256 curve
-    ecdsa_sign             signs a message with ECDSA
-    ecdsa_verify           checks an ECDSA signature, returns True or False
-    rsa_public_bytes       an RSA public key as bytes, for measuring its size
-    ecdsa_public_bytes     an ECDSA public key as bytes, for measuring its size
+# RSA
+rsa_keygen(bits=3072)                        -> (private_key, public_key)
+rsa_encaps(public_key)                       -> (locked_key, aes_key)
+rsa_decaps(private_key, locked_key)          -> aes_key
+rsa_sign(private_key, message)               -> signature
+rsa_verify(public_key, signature, message)   -> True or False
+rsa_public_bytes(public_key)                 -> bytes
+
+# ECDSA
+ecdsa_keygen()                               -> (private_key, public_key)
+ecdsa_sign(private_key, message)             -> signature
+ecdsa_verify(public_key, signature, message) -> True or False
+ecdsa_public_bytes(public_key)               -> bytes
+
+# AES
+aes_keygen(bits=256)                         -> key
+aes_encrypt(key, plaintext)                  -> (nonce, ciphertext)
+aes_decrypt(key, nonce, ciphertext)          -> plaintext
 ```
 
 ## How it works
 
-`aes_keygen` makes a 256-bit AES key. Grover's algorithm lets a quantum computer roughly halve the strength of a symmetric key, so a 256-bit key still leaves about 128 bits of security; the scanner's AES-GCM rule also recommends 256-bit keys. `aes_encrypt` picks a new random 12-byte nonce for every message and returns it with the ciphertext. The nonce does not need to be secret, but it must never be reused with the same key. GCM adds a 16-byte authentication tag to the ciphertext, so an 11-byte message locks to 27 bytes, and `aes_decrypt` raises `InvalidTag` instead of returning a message that was changed.
+**Sending an encrypted message.** RSA is framed as a key encapsulation mechanism so it lines up with ML-KEM. The sender calls `rsa_encaps` with the receiver's public key, which generates a fresh 32-byte AES key and encrypts it with RSA-OAEP. The sender then encrypts the message with `aes_encrypt` and sends three things: the locked AES key, the nonce and the ciphertext. The receiver recovers the AES key with `rsa_decaps` and decrypts with `aes_decrypt`. The post-quantum version is the same flow with ML-KEM in place of RSA, since ML-KEM's 32-byte shared secret can be used directly as the AES-256 key.
 
-RSA can only lock a few hundred bytes and is slow, so it is used to deliver an AES key rather than to lock the message itself. `rsa_encap` makes a fresh 256-bit AES key and locks it with the receiver's public key using OAEP padding with SHA-256, and `rsa_decap` unlocks it with the private key. From then on both sides use that key with `aes_encrypt` and `aes_decrypt`. This is the same job ML-KEM does, so the functions are named after a KEM's encapsulate and decapsulate steps, and the 32-byte AES key plays the role of the shared secret. Signatures use PSS padding with SHA-256 and a salt as long as the hash. Keys use the standard public exponent 65537 and are 3072 bits by default, the size NIST pairs with 128-bit security. The benchmark also measures 2048-bit keys, which NIST rates at 112 bits.
+**Signing.** The signer calls `rsa_sign` or `ecdsa_sign` with their private key, and anyone with the matching public key can check the result with `rsa_verify` or `ecdsa_verify`. The verify functions return `False` for a bad signature instead of raising an exception, which is what the benchmark's runner expects.
 
-`ecdsa_keygen` makes a key pair on the P-256 curve (also called secp256r1 or prime256v1), and signing hashes the message with SHA-256. ECDSA does the same job as RSA signatures with much smaller keys and signatures; the sizes are under Results so far.
-
-Both verify functions return True or False instead of raising an exception, which is what the benchmark expects. All of the settings above match `benchmarks/algorithms.py`, including the byte formats used to measure public keys (PKCS#1 DER for RSA and an uncompressed point for P-256), so results from classical.py and from the benchmark's own code can be compared directly.
+**Choices that keep it secure.** OAEP and PSS are the recommended padding schemes for RSA encryption and signatures; the older PKCS#1 v1.5 schemes are avoided. AES-GCM is authenticated encryption, so changing even one bit of a message makes `aes_decrypt` raise `InvalidTag` instead of returning garbage. A GCM nonce must never repeat under the same key, so every call to `aes_encrypt` draws a new random one. The self-check uses separate RSA key pairs for encryption and signing, which is standard practice.
 
 ## Results so far
 
-Running the scanner on this file gives 12 findings. Both of the scanner's passes find the same 12, and nothing is picked up from comments or docstrings.
+**Benchmark integration.** The functions were plugged into `KEMScheme` and `SigScheme` and run through `bench_kem` and `bench_sig` from the benchmark on the laasya branch. All five schemes passed the runner's correctness checks: both sides end up with the same secret, real signatures verify, and tampered messages fail. Sizes match the benchmark's own implementations exactly, and median timings were within normal run-to-run variation of them.
 
-| Algorithm | Status | Found in |
-|---|---|---|
-| RSA | vulnerable | `rsa_keygen` |
-| ECDSA/ECDH | vulnerable | `ecdsa_keygen`, `ecdsa_sign`, `ecdsa_verify` |
-| AES-GCM | safe | `aes_encrypt`, `aes_decrypt` |
-| SHA-256 | safe | the OAEP and PSS settings, `rsa_sign`, `rsa_verify`, `ecdsa_sign`, `ecdsa_verify` |
-
-This is the result the module was written to show. RSA and ECDSA are flagged as vulnerable even though they are used correctly, with modern padding and key sizes, while AES-256-GCM and SHA-256 are marked safe.
-
-The benchmark does not call classical.py yet; the classical and PQC parts of the demo app will be plugged into it once they are ready. To check that classical.py is ready, the benchmark's RSA-2048 and RSA-3072 (OAEP), RSA-2048 and RSA-3072 (PSS) and ECDSA P-256 entries were rebuilt from its functions, using the slots listed in its docstring, and run through the benchmark's own runner. All five passed the runner's correctness checks: both sides end up with the same secret, a real signature verifies, and a signature fails to verify against a changed message. The sizes match the benchmark's own code:
-
-| Algorithm | Public key (bytes) | Ciphertext or signature (bytes) |
+| Scheme | Public key (bytes) | Ciphertext or signature (bytes) |
 |---|---|---|
 | RSA-2048 (OAEP) | 270 | 256 |
 | RSA-3072 (OAEP) | 398 | 384 |
 | RSA-2048 (PSS) | 270 | 256 |
 | RSA-3072 (PSS) | 398 | 384 |
-| ECDSA P-256 | 65 | about 71 (varies slightly) |
+| ECDSA P-256 | 65 | 70 to 72 |
 
-Ciphertexts and signatures made by classical.py are also accepted by the benchmark's code, and the other way round, which confirms the padding and hash settings are the same. Timed back to back on the same RSA-3072 key, classical.py was within 2% of the benchmark's own code, so swapping it in should not change the timing results.
+For comparison, the benchmark measures an ML-KEM-768 ciphertext at 1,088 bytes and an ML-DSA-44 signature at 2,420 bytes. Official timing numbers come from the benchmark; see `laasyareadme.md`.
+
+**Scanner results.** Running the scanner on this folder (`python main.py demo_app`) gives 12 findings: RSA and ECDSA marked vulnerable, AES-GCM and SHA-256 marked safe. The line numbers below are for the current version of `classical.py` and can serve as a starting point for the ground-truth list.
+
+| Line | Crypto use | Scanner result |
+|---|---|---|
+| 31 | AES key generation | not reported |
+| 37, 43 | AES-GCM encrypt, decrypt | AES-GCM, safe |
+| 51, 52 | OAEP and PSS settings (SHA-256) | SHA-256, safe |
+| 57 | RSA key generation | RSA, vulnerable |
+| 65, 71 | RSA-OAEP encrypt, decrypt | not reported |
+| 76, 82 | RSA-PSS sign, verify | SHA-256, safe |
+| 100 | ECDSA P-256 key generation | ECDSA/ECDH, vulnerable |
+| 106, 112 | ECDSA sign, verify | ECDSA/ECDH, vulnerable, and SHA-256, safe |
+
+The scanner finds every algorithm in the file, but RSA is tied only to its key generation line. The OAEP and PSS lines are reported as SHA-256, and the encrypt, decrypt, sign and verify calls on RSA keys are not reported, while ECDSA is reported on three lines. Rules matching `padding.OAEP` and `padding.PSS` (for RSA) and `AESGCM.generate_key` (for AES-GCM) would close these gaps. When comparing against the ground-truth list, it is worth deciding whether findings count per line or per algorithm.
 
 ## Known limitations
 
-classical.py covers AES-GCM, RSA and ECDSA only. The benchmark's other classical algorithms, ECDH with X25519 or P-256 and Ed25519 signatures, are not implemented here, so those entries would keep using the benchmark's own code. The benchmark also has no slot for symmetric ciphers, so the AES functions are not benchmarked.
-
-Keys only exist in memory. There is no way to save a private key to a file or load one back, and there are no certificates, so nothing proves that a public key really belongs to Bob. `rsa_encap` does not prove who sent the key either; a real protocol would also authenticate the sender, for example with a signature. Sending a key with RSA also has no forward secrecy: anyone who records a locked key today can unlock it later if the private key leaks, or once a quantum computer can break RSA. This "harvest now, decrypt later" risk is why key exchange is usually the first thing to migrate. Because AES-GCM uses random 12-byte nonces, one key should not lock more than about 4 billion (2^32) messages.
-
-The scanner only finds RSA where the key is made, in `rsa_keygen`. It matches names, so the calls that use an RSA key in `rsa_encap`, `rsa_decap`, `rsa_sign` and `rsa_verify` are not reported as RSA, and code that loaded an RSA key from a file instead of generating one would not be flagged at all.
+Keys exist only in memory. There is no saving or loading of keys to files and no password protection, which a real application would need. There is also no user-facing application yet; the module provides the building blocks (an encrypted message and signatures) that a demo would call. Messages must be bytes, so text needs `.encode()` first. Nothing stops a caller from using the same RSA key pair for both encryption and signing, though separate pairs are the recommended practice. Random 12-byte nonces are safe at this project's scale; NIST guidance caps random nonces at about four billion messages per key. AES is not part of the benchmark, since it is identical on the classical and post-quantum sides.
