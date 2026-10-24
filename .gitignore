@@ -1,5 +1,14 @@
+# Python generated files
 __pycache__/
 *.pyc
+
+# Virtual environments
 .venv/
 venv/
-benchmarks/results/
+
+# Generated reports
+security_report.txt
+
+# Environment variables and secrets
+.env
+.env.*

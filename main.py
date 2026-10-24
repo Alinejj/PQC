@@ -5,6 +5,7 @@ from dataclasses import asdict
 from scanner.rules import load_rules
 from scanner.walker import scan_path
 
+from report_generator import generate_report
 
 def main():
     parser = argparse.ArgumentParser(
@@ -15,10 +16,19 @@ def main():
                         help="path to the rules JSON file")
     parser.add_argument("--json", action="store_true",
                         help="print findings as JSON instead of text")
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="generate a detailed security report"
+    )
     args = parser.parse_args()
 
     rules = load_rules(args.rules)
     findings = scan_path(args.target, rules)
+
+    if args.report:
+        generate_report(findings)
+        return
 
     if args.json:
         print(json.dumps([asdict(f) for f in findings], indent=2))
