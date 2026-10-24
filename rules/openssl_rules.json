@@ -1,0 +1,114 @@
+[
+    {
+        "id": "OPENSSL-MIN-TLS-1.0",
+        "pattern": "\\b(?:MinProtocol|Protocol)\\s*=\\s*TLSv1(?:\\.0)?(?!\\.\\d)\\b",
+        "algorithm": "TLS 1.0",
+        "category": "protocol",
+        "status": "weak",
+        "replacement": "Set MinProtocol = TLSv1.2 or newer"
+    },
+    {
+        "id": "OPENSSL-MIN-TLS-1.1",
+        "pattern": "\\b(?:MinProtocol|Protocol)\\s*=\\s*TLSv1\\.1\\b",
+        "algorithm": "TLS 1.1",
+        "category": "protocol",
+        "status": "weak",
+        "replacement": "Set MinProtocol = TLSv1.2 or newer"
+    },
+    {
+        "id": "OPENSSL-SSLV3",
+        "pattern": "\\b(?:MinProtocol|MaxProtocol|Protocol)\\s*=\\s*SSLv3\\b",
+        "algorithm": "SSLv3",
+        "category": "protocol",
+        "status": "weak",
+        "replacement": "Disable SSLv3 and use TLSv1.2 or TLSv1.3"
+    },
+    {
+        "id": "OPENSSL-WEAK-CIPHER",
+        "pattern": "\\b(?:CipherString|CipherSuite|Ciphersuites)\\s*=\\s*[^\\r\\n#;]*(?:RC4|ARCFOUR|DES|3DES|DES-CBC3|EXPORT|NULL|aNULL|MD5)",
+        "algorithm": "Legacy TLS cipher",
+        "category": "symmetric",
+        "status": "weak",
+        "replacement": "Remove legacy, export, NULL, and unauthenticated ciphers and use a modern cipher policy"
+    },
+    {
+        "id": "OPENSSL-AES-CBC",
+        "pattern": "\\b(?:CipherString|CipherSuite|Ciphersuites)\\s*=\\s*[^\\r\\n#;]*\\bAES(?:128|256)-CBC(?:-SHA|-SHA256|-SHA384)?\\b",
+        "algorithm": "AES-CBC",
+        "category": "symmetric",
+        "status": "transitional",
+        "replacement": "Prefer TLS 1.3 cipher suites or authenticated AES-GCM suites"
+    },
+    {
+        "id": "OPENSSL-SHA1-SIGNATURE",
+        "pattern": "\\b(?:SignatureAlgorithms|SignatureAlgorithm)\\s*=\\s*[^\\r\\n#;]*(?:SHA1|RSA\\+SHA1|ECDSA\\+SHA1)",
+        "algorithm": "SHA-1 signature",
+        "category": "hash",
+        "status": "weak",
+        "replacement": "Remove SHA-1 signatures and use SHA-256 or stronger"
+    },
+    {
+        "id": "OPENSSL-P256-GROUP",
+        "pattern": "\\b(?:Groups|Curves|SupportedGroups)\\s*=\\s*[^\\r\\n#;]*\\b(?:P-256|prime256v1|secp256r1)\\b",
+        "algorithm": "ECDH P-256",
+        "category": "key_exchange",
+        "status": "vulnerable",
+        "replacement": "Use a supported hybrid post-quantum key-exchange group with classical fallback during transition"
+    },
+    {
+        "id": "OPENSSL-X25519",
+        "pattern": "\\b(?:Groups|Curves|SupportedGroups)\\s*=\\s*[^\\r\\n#;]*\\bX25519\\b",
+        "algorithm": "X25519",
+        "category": "key_exchange",
+        "status": "vulnerable",
+        "replacement": "Prefer a supported hybrid X25519/ML-KEM group during the transition to post-quantum TLS"
+    },
+    {
+        "id": "OPENSSL-DH-GROUP",
+        "pattern": "\\b(?:Groups|Curves|SupportedGroups)\\s*=\\s*[^\\r\\n#;]*\\b(?:ffdhe\\d+|DH\\d*)\\b",
+        "algorithm": "Finite-field Diffie-Hellman",
+        "category": "key_exchange",
+        "status": "vulnerable",
+        "replacement": "Use a supported hybrid post-quantum key exchange where available and plan to retire classical DH"
+    },
+    {
+        "id": "OPENSSL-SECLEVEL-LOW",
+        "pattern": "\\b(?:CipherString|CipherSuite)\\s*=\\s*[^\\r\\n#;]*@SECLEVEL=[01]\\b",
+        "algorithm": "OpenSSL security level 0 or 1",
+        "category": "protocol",
+        "status": "weak",
+        "replacement": "Use an appropriate current OpenSSL security level, normally SECLEVEL=2 or higher"
+    },
+    {
+        "id": "OPENSSL-RSA-SIGNATURE",
+        "pattern": "\\b(?:SignatureAlgorithms|SignatureAlgorithm)\\s*=\\s*[^\\r\\n#;]*\\bRSA\\b",
+        "algorithm": "RSA signature",
+        "category": "asymmetric",
+        "status": "vulnerable",
+        "replacement": "Plan a post-quantum or hybrid signature strategy and retain RSA only as a transition mechanism"
+    },
+    {
+        "id": "OPENSSL-ECDSA-SIGNATURE",
+        "pattern": "\\b(?:SignatureAlgorithms|SignatureAlgorithm)\\s*=\\s*[^\\r\\n#;]*\\bECDSA\\b",
+        "algorithm": "ECDSA signature",
+        "category": "asymmetric",
+        "status": "vulnerable",
+        "replacement": "Plan a post-quantum or hybrid signature strategy and retain ECDSA only as a transition mechanism"
+    },
+    {
+        "id": "OPENSSL-ML-KEM",
+        "pattern": "\\b(?:Groups|Curves|SupportedGroups)\\s*=\\s*[^\\r\\n#;]*\\b(?:ML-KEM|Kyber|X25519MLKEM768|SecP256r1MLKEM768)\\b",
+        "algorithm": "ML-KEM / hybrid KEM",
+        "category": "key_exchange",
+        "status": "safe",
+        "replacement": "None needed; verify provider and deployment support"
+    },
+    {
+        "id": "OPENSSL-TLS13-CIPHER",
+        "pattern": "\\b(?:Ciphersuites|CipherSuite)\\s*=\\s*[^\\r\\n#;]*\\b(?:TLS_AES_(?:128|256)_GCM_SHA256|TLS_CHACHA20_POLY1305_SHA256)\\b",
+        "algorithm": "TLS 1.3 authenticated cipher",
+        "category": "symmetric",
+        "status": "safe",
+        "replacement": "None needed"
+    }
+]
