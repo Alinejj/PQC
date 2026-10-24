@@ -7,7 +7,7 @@ PQC_service/__pycache__/
 .venv/
 venv/
 
-# Generated reports
+# Generated reports and benchmark results
 security_report.txt
 benchmarks/results/
 
