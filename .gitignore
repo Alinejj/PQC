@@ -1,3 +1,15 @@
-.venv/
-PQC_service/__pycache__/
+# Python generated files
 __pycache__/
+PQC_service/__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Generated reports
+security_report.txt
+
+# Environment variables and secrets
+.env
+.env.*
