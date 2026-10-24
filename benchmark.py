@@ -9,7 +9,7 @@ from datetime import datetime
 import cryptography
 from cryptography.hazmat.backends.openssl import backend
 
-from benchmarks.algorithms import KEM_SCHEMES, SIG_SCHEMES
+from benchmarks.algorithms import KEM_SCHEMES, PQC_BACKEND, SIG_SCHEMES
 from benchmarks.runner import OpResult, SizeResult, bench_kem, bench_sig
 
 
@@ -21,6 +21,7 @@ def machine_info():
         "python": platform.python_version(),
         "cryptography": cryptography.__version__,
         "openssl": backend.openssl_version_text(),
+        "pqc_backend": PQC_BACKEND,
     }
 
 
@@ -58,6 +59,7 @@ def main():
                         help="folder for results.json, timings.csv and sizes.csv")
     args = parser.parse_args()
 
+    print(f"ML-KEM and ML-DSA backend: {PQC_BACKEND}")
     message = os.urandom(args.message_size)
     timings, sizes = [], []
 

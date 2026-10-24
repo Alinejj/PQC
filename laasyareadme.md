@@ -11,11 +11,13 @@ Migrating to post-quantum cryptography is not free. ML-KEM and ML-DSA have much 
 
 ## How to run
 
-The only dependency is the `cryptography` package, version 50 or newer, which includes ML-KEM and ML-DSA through OpenSSL. It was developed and tested on Python 3.14 on Windows.
+The only required dependency is the `cryptography` package, version 50 or newer, which includes ML-KEM and ML-DSA through OpenSSL. It was developed and tested on Python 3.14 on Windows.
 
 ```
 pip install cryptography
 ```
+
+If `liboqs-python` and the liboqs C library are also installed, the ML-KEM and ML-DSA entries use the demo app's `PQC_service` code instead. liboqs has to be built from source, which needs CMake and a C compiler; without it the benchmark falls back to the `cryptography` versions. The program prints which one it used.
 
 From the project root:
 
@@ -28,7 +30,7 @@ python benchmark.py --help
 
 The first runs every algorithm with 10 timed runs per operation, the second runs only the algorithms whose name contains `ML-DSA`, and the third does a longer, more stable run. Other flags are `--warmup` (untimed runs before timing, default 5), `--message-size` (bytes in the signed message, default 1024) and `--out` (output folder, default `benchmarks/results`).
 
-The program prints a timing table and a size table, then writes three files to the output folder: `timings.csv`, `sizes.csv`, and `results.json`, which also records the machine, Python, cryptography and OpenSSL versions. The results folder is in `.gitignore` so test runs are not committed.
+The program prints a timing table and a size table, then writes three files to the output folder: `timings.csv`, `sizes.csv`, and `results.json`, which also records the machine, the Python, cryptography and OpenSSL versions, and whether ML-KEM and ML-DSA came from liboqs or cryptography. The results folder is in `.gitignore` so test runs are not committed.
 
 ## Project layout
 
@@ -85,4 +87,4 @@ A quick 10-run test suggests speed is not the problem. ML-KEM and ML-DSA run in 
 
 ## Known limitations
 
-Timings depend on the machine, so they should only be compared within the same run, not across different computers. Python adds some overhead to every call, which matters more for the fastest operations. The RSA and ECDSA entries now run the demo app's `classical.py`, but ECDH, Ed25519, ML-KEM and ML-DSA still use the benchmark's own code; the PQC part of the demo app will be plugged in once it is ready. Symmetric algorithms such as AES are not benchmarked yet.
+Timings depend on the machine, so they should only be compared within the same run, not across different computers. Python adds some overhead to every call, which matters more for the fastest operations. The RSA and ECDSA entries run the demo app's `classical.py`, and ML-KEM and ML-DSA run its `PQC_service` when liboqs is installed, but ECDH and Ed25519 still use the benchmark's own code. liboqs and OpenSSL implement ML-KEM and ML-DSA differently, and in a short test liboqs was several times faster, so results should say which backend was used and only be compared within the same backend. Symmetric algorithms such as AES are not benchmarked yet.
