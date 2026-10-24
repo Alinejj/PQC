@@ -46,7 +46,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Benchmark classical vs post-quantum key exchange and signatures"
     )
-    parser.add_argument("--iterations", type=int, default=100,
+    parser.add_argument("--iterations", type=int, default=10,
                         help="timed runs per operation")
     parser.add_argument("--warmup", type=int, default=5,
                         help="untimed runs before timing each operation")

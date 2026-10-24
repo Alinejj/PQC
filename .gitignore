@@ -9,6 +9,7 @@ venv/
 
 # Generated reports
 security_report.txt
+benchmarks/results/
 
 # Environment variables and secrets
 .env
