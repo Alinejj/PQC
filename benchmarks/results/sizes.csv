@@ -1,0 +1,14 @@
+scheme,family,kind,public_key_bytes,output_bytes,shared_secret_bytes
+RSA-2048 (OAEP),classical,kem,270,256,32
+RSA-3072 (OAEP),classical,kem,398,384,32
+ECDH X25519,classical,kem,32,32,32
+ECDH P-256,classical,kem,65,65,32
+ML-KEM-768,pqc,kem,1184,1088,32
+ML-KEM-1024,pqc,kem,1568,1568,32
+RSA-2048 (PSS),classical,sig,270,256,0
+RSA-3072 (PSS),classical,sig,398,384,0
+ECDSA P-256,classical,sig,65,70,0
+Ed25519,classical,sig,32,64,0
+ML-DSA-44,pqc,sig,1312,2420,0
+ML-DSA-65,pqc,sig,1952,3309,0
+ML-DSA-87,pqc,sig,2592,4627,0
