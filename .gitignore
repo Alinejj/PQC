@@ -1,5 +1,6 @@
 # Python generated files
 __pycache__/
+PQC_service/__pycache__/
 *.pyc
 
 # Virtual environments
