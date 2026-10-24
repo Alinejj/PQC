@@ -22,11 +22,11 @@ From the project root:
 ```
 python benchmark.py
 python benchmark.py --only ML-DSA
-python benchmark.py --iterations 20
+python benchmark.py --iterations 100
 python benchmark.py --help
 ```
 
-The first runs every algorithm with 100 timed runs per operation, the second runs only the algorithms whose name contains `ML-DSA`, and the third does a quicker, noisier run. Other flags are `--warmup` (untimed runs before timing, default 5), `--message-size` (bytes in the signed message, default 1024) and `--out` (output folder, default `benchmarks/results`).
+The first runs every algorithm with 10 timed runs per operation, the second runs only the algorithms whose name contains `ML-DSA`, and the third does a longer, more stable run. Other flags are `--warmup` (untimed runs before timing, default 5), `--message-size` (bytes in the signed message, default 1024) and `--out` (output folder, default `benchmarks/results`).
 
 The program prints a timing table and a size table, then writes three files to the output folder: `timings.csv`, `sizes.csv`, and `results.json`, which also records the machine, Python, cryptography and OpenSSL versions. The results folder is in `.gitignore` so test runs are not committed.
 
