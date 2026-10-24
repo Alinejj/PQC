@@ -1,0 +1,82 @@
+[
+    {
+        "id": "NGINX-TLS-1.0",
+        "pattern": "\\bssl_protocols\\s+[^;]*\\bTLSv1(?:\\.0)?(?!\\.\\d)\\b",
+        "algorithm": "TLS 1.0",
+        "category": "protocol",
+        "status": "weak",
+        "replacement": "Remove TLSv1 and use TLSv1.2 or TLSv1.3"
+    },
+    {
+        "id": "NGINX-TLS-1.1",
+        "pattern": "\\bssl_protocols\\s+[^;]*\\bTLSv1\\.1\\b",
+        "algorithm": "TLS 1.1",
+        "category": "protocol",
+        "status": "weak",
+        "replacement": "Remove TLSv1.1 and use TLSv1.2 or TLSv1.3"
+    },
+    {
+        "id": "NGINX-SSLV3",
+        "pattern": "\\bssl_protocols\\s+[^;]*\\bSSLv3\\b",
+        "algorithm": "SSLv3",
+        "category": "protocol",
+        "status": "weak",
+        "replacement": "Disable SSLv3 and use TLSv1.2 or TLSv1.3"
+    },
+    {
+        "id": "NGINX-WEAK-CIPHER",
+        "pattern": "\\bssl_ciphers\\s+[^;]*\\b(?:RC4|ARCFOUR|DES|3DES|DES-CBC3|EXPORT|NULL|aNULL|MD5)\\b",
+        "algorithm": "Legacy TLS cipher",
+        "category": "symmetric",
+        "status": "weak",
+        "replacement": "Remove legacy, export, NULL, and unauthenticated ciphers and use a modern TLS cipher policy"
+    },
+    {
+        "id": "NGINX-AES-CBC",
+        "pattern": "\\bssl_ciphers\\s+[^;]*\\bAES(?:128|256)-CBC(?:-SHA|-SHA256|-SHA384)?\\b",
+        "algorithm": "AES-CBC",
+        "category": "symmetric",
+        "status": "transitional",
+        "replacement": "Prefer TLS 1.3 cipher suites or authenticated AES-GCM suites"
+    },
+    {
+        "id": "NGINX-SHA1-CIPHER",
+        "pattern": "\\bssl_ciphers\\s+[^;]*\\b(?:SHA|RSA\\+SHA)\\b",
+        "algorithm": "SHA-1 TLS cipher",
+        "category": "hash",
+        "status": "weak",
+        "replacement": "Remove SHA-1 cipher suites and use modern TLS cipher suites"
+    },
+    {
+        "id": "NGINX-P256",
+        "pattern": "\\bssl_ecdh_curve\\s+[^;]*\\b(?:prime256v1|secp256r1|P-256)\\b",
+        "algorithm": "ECDH P-256",
+        "category": "key_exchange",
+        "status": "vulnerable",
+        "replacement": "Use a supported hybrid post-quantum key-exchange group with classical fallback during transition"
+    },
+    {
+        "id": "NGINX-X25519",
+        "pattern": "\\bssl_ecdh_curve\\s+[^;]*\\bX25519\\b",
+        "algorithm": "X25519",
+        "category": "key_exchange",
+        "status": "vulnerable",
+        "replacement": "Prefer a supported hybrid X25519/ML-KEM group during the transition to post-quantum TLS"
+    },
+    {
+        "id": "NGINX-DH-PARAM",
+        "pattern": "\\bssl_dhparam\\s+[^;]*",
+        "algorithm": "Finite-field Diffie-Hellman",
+        "category": "key_exchange",
+        "status": "vulnerable",
+        "replacement": "Use a supported hybrid post-quantum key exchange where available and plan to retire classical DH"
+    },
+    {
+        "id": "NGINX-DEFAULT-CIPHER",
+        "pattern": "\\bssl_ciphers\\s+DEFAULT(?::|\\s|;)",
+        "algorithm": "OpenSSL default cipher policy",
+        "category": "symmetric",
+        "status": "transitional",
+        "replacement": "Set an explicit modern cipher policy instead of relying on the OpenSSL default"
+    }
+]
