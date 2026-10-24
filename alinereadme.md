@@ -42,6 +42,8 @@ scanner/
     walker.py              merges both passes and walks folders
 rules/
     python_rules.json      the detection rules (23 rules)
+    openssl_rules.json     the detection rules for openssl config files
+    nginx_rules.json       the detection rules for nginx config files
 tests/samples/
     crypto_demo.py         small first test
     ground_truth_demo.py   16 known crypto assets, for measuring detection
