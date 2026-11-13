@@ -27,7 +27,7 @@ pip install cryptography
 | Algorithm | Functions | Job | Settings |
 |---|---|---|---|
 | AES-GCM | `aes_keygen`, `aes_encrypt`, `aes_decrypt` | Encrypts the actual message | 256-bit key by default, a fresh random 12-byte nonce per message, 16-byte authentication tag |
-| RSA-OAEP | `rsa_keygen`, `rsa_encaps`, `rsa_decaps` | Delivers a fresh AES key to the receiver | 2048 or 3072 bits (default 3072), public exponent 65537, OAEP with SHA-256 |
+| RSA-OAEP | `rsa_keygen`, `rsa_encap`, `rsa_decap` | Delivers a fresh AES key to the receiver | 2048 or 3072 bits (default 3072), public exponent 65537, OAEP with SHA-256 |
 | RSA-PSS | `rsa_keygen`, `rsa_sign`, `rsa_verify` | Signs messages | PSS with SHA-256, salt length equal to the hash length |
 | ECDSA | `ecdsa_keygen`, `ecdsa_sign`, `ecdsa_verify` | Signs messages | P-256 curve, SHA-256 |
 
@@ -40,8 +40,8 @@ The RSA and ECDSA functions follow the `KEMScheme` and `SigScheme` shapes in `be
 ```
 # RSA
 rsa_keygen(bits=3072)                        -> (private_key, public_key)
-rsa_encaps(public_key)                       -> (locked_key, aes_key)
-rsa_decaps(private_key, locked_key)          -> aes_key
+rsa_encap(public_key)                       -> (locked_key, aes_key)
+rsa_decap(private_key, locked_key)          -> aes_key
 rsa_sign(private_key, message)               -> signature
 rsa_verify(public_key, signature, message)   -> True or False
 rsa_public_bytes(public_key)                 -> bytes
@@ -60,7 +60,7 @@ aes_decrypt(key, nonce, ciphertext)          -> plaintext
 
 ## How it works
 
-**Sending an encrypted message.** RSA is framed as a key encapsulation mechanism so it lines up with ML-KEM. The sender calls `rsa_encaps` with the receiver's public key, which generates a fresh 32-byte AES key and encrypts it with RSA-OAEP. The sender then encrypts the message with `aes_encrypt` and sends three things: the locked AES key, the nonce and the ciphertext. The receiver recovers the AES key with `rsa_decaps` and decrypts with `aes_decrypt`. The post-quantum version is the same flow with ML-KEM in place of RSA, since ML-KEM's 32-byte shared secret can be used directly as the AES-256 key.
+**Sending an encrypted message.** RSA is framed as a key encapsulation mechanism so it lines up with ML-KEM. The sender calls `rsa_encap` with the receiver's public key, which generates a fresh 32-byte AES key and encrypts it with RSA-OAEP. The sender then encrypts the message with `aes_encrypt` and sends three things: the locked AES key, the nonce and the ciphertext. The receiver recovers the AES key with `rsa_decap` and decrypts with `aes_decrypt`. The post-quantum version is the same flow with ML-KEM in place of RSA, since ML-KEM's 32-byte shared secret can be used directly as the AES-256 key.
 
 **Signing.** The signer calls `rsa_sign` or `ecdsa_sign` with their private key, and anyone with the matching public key can check the result with `rsa_verify` or `ecdsa_verify`. The verify functions return `False` for a bad signature instead of raising an exception, which is what the benchmark's runner expects.
 
