@@ -1,0 +1,57 @@
+{
+  "tests/samples/ground_truth_demo.py": [
+    {"line": 9,  "algorithm": "RSA"},
+    {"line": 10, "algorithm": "RSA"},
+    {"line": 11, "algorithm": "ECDSA/ECDH"},
+    {"line": 12, "algorithm": "Ed25519"},
+    {"line": 13, "algorithm": "ECDSA/ECDH"},
+    {"line": 13, "algorithm": "SHA-256"},
+    {"line": 16, "algorithm": "AES-GCM"},
+    {"line": 17, "algorithm": "AES-CBC"},
+    {"line": 18, "algorithm": "3DES/DES"},
+    {"line": 21, "algorithm": "MD5"},
+    {"line": 22, "algorithm": "SHA-1"},
+    {"line": 23, "algorithm": "SHA-256"},
+    {"line": 24, "algorithm": "SHA-512"},
+    {"line": 27, "algorithm": "ML-KEM / hybrid KEM"},
+    {"line": 27, "algorithm": "X25519"},
+    {"line": 27, "algorithm": "ECDH P-256 (prime256v1)"}
+  ],
+  "tests/samples/ast_demo.py": [
+    {"line": 7,  "algorithm": "RSA"},
+    {"line": 8,  "algorithm": "MD5"},
+    {"line": 9,  "algorithm": "SHA-1"},
+    {"line": 10, "algorithm": "AES-CBC"}
+  ],
+  "tests/samples/gap_test.py": [
+    {"line": 9,  "algorithm": "RSA"},
+    {"line": 10, "algorithm": "DSA"},
+    {"line": 11, "algorithm": "MD5"},
+    {"line": 12, "algorithm": "SHA-3"},
+    {"line": 13, "algorithm": "BLAKE2"},
+    {"line": 14, "algorithm": "Fernet (AES-128-CBC + HMAC)"},
+    {"line": 15, "algorithm": "ChaCha20"},
+    {"line": 16, "algorithm": "Blowfish"},
+    {"line": 16, "algorithm": "ECB mode"},
+    {"line": 17, "algorithm": "AES-CBC"},
+    {"line": 18, "algorithm": "TLS 1.0/1.1 or SSL"}
+  ],
+  "tests/samples/blind_structure.py": [
+    {"line": 13, "algorithm": "SHA-256"},
+    {"line": 20, "algorithm": "SHA-256"},
+    {"line": 26, "algorithm": "MD5"},
+    {"line": 31, "algorithm": "AES-GCM"},
+    {"line": 36, "algorithm": "RSA"},
+    {"line": 44, "algorithm": "RSA"},
+    {"line": 48, "algorithm": "RSA"}
+  ],
+  "tests/samples/blind_decoys.py": [],
+  "tests/samples/new_rules.py": [
+    {"line": 5, "algorithm": "ML-DSA / post-quantum signature"},
+    {"line": 5, "algorithm": "liboqs post-quantum primitive"},
+    {"line": 6, "algorithm": "ML-KEM / hybrid KEM"},
+    {"line": 6, "algorithm": "liboqs post-quantum primitive"},
+    {"line": 7, "algorithm": "RSA padding (OAEP/PSS)"},
+    {"line": 8, "algorithm": "AES-GCM"}
+  ]
+}
