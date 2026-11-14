@@ -1,0 +1,9 @@
+# openssl TLS settings used to test the config scanner
+[system_default_sect]
+MinProtocol = TLSv1
+CipherString = DEFAULT:@SECLEVEL=1:AES128-CBC-SHA
+Ciphersuites = TLS_AES_256_GCM_SHA384
+Groups = X25519:P-256
+# Groups = ffdhe2048
+SignatureAlgorithms = RSA+SHA1:ECDSA+SHA256
+Groups = X25519MLKEM768:X25519
