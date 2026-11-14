@@ -53,5 +53,30 @@
     {"line": 6, "algorithm": "liboqs post-quantum primitive"},
     {"line": 7, "algorithm": "RSA padding (OAEP/PSS)"},
     {"line": 8, "algorithm": "AES-GCM"}
+  ],
+    "tests/samples/nginx_demo.conf": [
+    {"line": 4, "algorithm": "TLS 1.0"},
+    {"line": 4, "algorithm": "TLS 1.1"},
+    {"line": 5, "algorithm": "AES-CBC"},
+    {"line": 5, "algorithm": "Legacy TLS cipher"},
+    {"line": 5, "algorithm": "SHA-1 TLS cipher"},
+    {"line": 6, "algorithm": "ECDH P-256"},
+    {"line": 7, "algorithm": "Finite-field Diffie-Hellman"},
+    {"line": 11, "algorithm": "ML-KEM / hybrid KEM"},
+    {"line": 11, "algorithm": "X25519"}
+  ],
+  "tests/samples/openssl_demo.cnf": [
+    {"line": 3, "algorithm": "TLS 1.0"},
+    {"line": 4, "algorithm": "AES-CBC"},
+    {"line": 4, "algorithm": "OpenSSL security level 0 or 1"},
+    {"line": 4, "algorithm": "SHA-1 TLS cipher"},
+    {"line": 5, "algorithm": "TLS 1.3 authenticated cipher"},
+    {"line": 6, "algorithm": "X25519"},
+    {"line": 6, "algorithm": "ECDH P-256"},
+    {"line": 8, "algorithm": "RSA signature"},
+    {"line": 8, "algorithm": "SHA-1 signature"},
+    {"line": 8, "algorithm": "ECDSA signature"},
+    {"line": 9, "algorithm": "ML-KEM / hybrid KEM"},
+    {"line": 9, "algorithm": "X25519"}
   ]
 }

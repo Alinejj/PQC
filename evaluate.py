@@ -12,8 +12,8 @@ def count_by_line(items):
     return by_line
 
 
-def score_file(path, expected, rules):
-    found = scan_path(path, rules)
+def score_file(path, expected, rules, config_rules):
+    found = scan_path(path, rules, config_rules)
     exp_by_line = count_by_line((e["line"], e["algorithm"]) for e in expected)
     got_by_line = count_by_line((f.line, f.algorithm) for f in found)
 
@@ -40,13 +40,17 @@ def score_file(path, expected, rules):
 
 def main():
     rules = load_rules("rules/python_rules.json")
+    config_rules = {
+        "nginx": load_rules("rules/nginx_rules.json"),
+        "openssl": load_rules("rules/openssl_rules.json"),
+    }
     with open("tests/expected.json", "r", encoding="utf-8") as f:
         answer_key = json.load(f)
 
     totals = {"expected": 0, "match": 0, "miss": 0, "mislabel": 0, "false_positive": 0}
 
     for path, expected in answer_key.items():
-        total, r = score_file(path, expected, rules)
+        total, r = score_file(path, expected, rules, config_rules)
         print(f"\n{path}")
         print(f"  expected {total}: match {r['match']}, miss {len(r['miss'])}, "
               f"mislabel {len(r['mislabel'])}, false positive {len(r['false_positive'])}")
