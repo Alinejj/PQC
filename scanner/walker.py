@@ -23,8 +23,11 @@ def dedupe(findings):
 
 
 def scan_one(path, rules):
-    return dedupe(scan_file_ast(path, rules) + scan_file(path, rules))
-
+    ast_findings = scan_file_ast(path, rules)
+    if ast_findings is None:
+        # not valid Python, so fall back to the line-by-line regex pass
+        return dedupe(scan_file(path, rules))
+    return dedupe(ast_findings)
 
 def config_kind(path):
     return CONFIG_EXTENSIONS.get(Path(path).suffix.lower())
