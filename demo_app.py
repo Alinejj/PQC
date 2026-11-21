@@ -16,7 +16,9 @@ from classical import (
     aes_decrypt,
 )
 
-from benchmarks.algorithms import KEM_SCHEMES, SIG_SCHEMES
+# from benchmarks.algorithms import KEM_SCHEMES, SIG_SCHEMES
+from PQC_service.mlkem import generate_kem_keypair, encapsulate, decapsulate
+from PQC_service.mldsa import generate_dsa_keypair, sign_message, verify_signature
 
 
 def rsa_demo():
@@ -79,16 +81,13 @@ def aes_demo():
     print("Messages match:", message == decrypted)
 
 
-
 def mlkem_demo():
     print("\n--- ML-KEM-768 Post-Quantum Key Exchange Demo ---")
 
-    scheme = next(s for s in KEM_SCHEMES if s.name == "ML-KEM-768")
+    public_key, secret_key = generate_kem_keypair("ML-KEM-768")
 
-    private_key, public_key = scheme.keygen()
-
-    ciphertext, original_secret = scheme.encaps(public_key)
-    recovered_secret = scheme.decaps(private_key, ciphertext)
+    ciphertext, original_secret = encapsulate(public_key, "ML-KEM-768")
+    recovered_secret = decapsulate(ciphertext, secret_key, "ML-KEM-768")
 
     print("ML-KEM key pair generated.")
     print("Shared secret encapsulated using public key.")
@@ -99,20 +98,16 @@ def mlkem_demo():
 def mldsa_demo():
     print("\n--- ML-DSA-65 Post-Quantum Signature Demo ---")
 
-    scheme = next(s for s in SIG_SCHEMES if s.name == "ML-DSA-65")
-
     message = b"Hello from the PQC project!"
 
-    private_key, public_key = scheme.keygen()
+    public_key, secret_key = generate_dsa_keypair("ML-DSA-65")
 
-    signature = scheme.sign(private_key, message)
-    verified = scheme.verify(public_key, signature, message)
+    signature = sign_message(message, secret_key, "ML-DSA-65")
+    verified = verify_signature(message, signature, public_key, "ML-DSA-65")
 
     print("Original message:", message.decode())
     print("Post-quantum signature generated.")
     print("Signature valid:", verified)
-
-
 
 
 def benchmark_demo():
@@ -130,7 +125,6 @@ def benchmark_demo():
         ],
         check=True,
     )
-
 
 
 def main():
