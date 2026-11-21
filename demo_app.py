@@ -16,7 +16,6 @@ from classical import (
     aes_decrypt,
 )
 
-# from benchmarks.algorithms import KEM_SCHEMES, SIG_SCHEMES
 from PQC_service.mlkem import generate_kem_keypair, encapsulate, decapsulate
 from PQC_service.mldsa import generate_dsa_keypair, sign_message, verify_signature
 
