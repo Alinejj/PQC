@@ -109,7 +109,7 @@ python benchmarks/plot.py benchmarks/final_results
 This writes `timings_kem.png`, `timings_sig.png`, `sizes_kem.png` and `sizes_sig.png` into the same folder. Timings are drawn as the median on a log scale, because they range from about 15 µs to over 300 ms.
 
 **Independent Testing**
-The answer key is the `Ground-Truth Table Expanded.xlsx` workbook, with the expected findings represented by test ID, file, line, expected algorithm, category, status and replacement. The PDF view is [Ground-Truth-Table(PDF).pdf](./Ground-Truth-Table.pdf). The findings used to score the scanner are also recorded in `tests/expected.json`.
+The answer key is the `Ground-Truth Table Expanded.xlsx` workbook, with the expected findings represented by test ID, file, line, expected algorithm, category, status and replacement. The PDF view is [Ground-Truth-Table.pdf](./Ground-Truth-Table.pdf). The findings used to score the scanner are also recorded in `tests/expected.json`.
 
 From the project root:
 ```
