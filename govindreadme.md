@@ -110,7 +110,7 @@ The demonstration:
 3. Verifies the signature using the public key.
 4. Displays whether verification succeeded.
 
-The post-quantum demonstrations use the algorithm interfaces available in `benchmarks/algorithms.py`, backed by the Python `cryptography` library.
+The ML-KEM-768 and ML-DSA-65 demonstrations use the scheme interfaces defined in `benchmarks/algorithms.py`. These interfaces use Nidhi's `PQC_service` implementation when liboqs is installed and fall back to the `cryptography` library otherwise.
 
 ## 4. Performance Benchmarking
 
