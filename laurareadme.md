@@ -13,7 +13,7 @@ recorded in the ground truth table answer key, and the scanner output is scored 
 | `blind_structure.py` | Real crypto calls inside `if`, `while`, `try`/`except`, and a function | Completed |
 | `blind_algorithms.py` | Algorithms not in the existing tests (HMAC, Diffie-Hellman, DES, RC4, password hashing, AES-ECB) | Completed |
 
-Answer key: `Ground-Truth Table Expanded` (test ID, file, line, expected algorithm, category, status, replacement). The expected findings are also scored through `tests/expected.json`. [Ground-Truth Table (PDF).pdf]
+Answer key: `Ground-Truth Table Expanded` (test ID, file, line, expected algorithm, category, status, replacement). The expected findings are also scored through `tests/expected.json`. Link here: [Ground-Truth-Table(PDF).pdf]
 
 ## Requirements
 - OS and language: developed and tested on Windows 11 with Python 3.13 and 3.14, and also run on Linux.
