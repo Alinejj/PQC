@@ -1,8 +1,4 @@
 # blind_decoys.py: every test below should produce NO findings
-# D7
-import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-
 
 # D1
 x = 5 # To do: rsa.generate_private_key()
