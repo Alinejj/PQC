@@ -39,7 +39,7 @@ except Exception:
 
 # S3b: call in an Except Body
 try:
-    raise ValueError("Test exception") # Would it still count if an exception wasn't raise??
+    raise ValueError("Test exception")
 except Exception:
     private_key2 = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
