@@ -16,7 +16,28 @@ from classical import (
     aes_decrypt,
 )
 
-from benchmarks.algorithms import KEM_SCHEMES, SIG_SCHEMES
+from PQC_service.mlkem import generate_kem_keypair, encapsulate, decapsulate
+from PQC_service.mldsa import generate_dsa_keypair, sign_message, verify_signature
+
+KEM_ALGS = ["ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"]
+DSA_ALGS = ["ML-DSA-44", "ML-DSA-65", "ML-DSA-87"]
+
+
+def choose(options):
+    while True:
+        print()
+        for i in range(len(options)):
+            print(f"{i + 1}. {options[i]}")
+        print("0. Back")
+
+        pick = input("Pick a variant: ").strip()
+
+        if pick == "0":
+            return None
+        if pick.isdigit() and 1 <= int(pick) <= len(options):
+            return options[int(pick) - 1]
+
+        print("That's not an option, try again.")
 
 
 def rsa_demo():
@@ -79,40 +100,49 @@ def aes_demo():
     print("Messages match:", message == decrypted)
 
 
-
 def mlkem_demo():
-    print("\n--- ML-KEM-768 Post-Quantum Key Exchange Demo ---")
+    alg = choose(KEM_ALGS)
+    if not alg:
+        return
 
-    scheme = next(s for s in KEM_SCHEMES if s.name == "ML-KEM-768")
+    print(f"\n--- {alg} Post-Quantum Key Exchange Demo ---")
 
-    private_key, public_key = scheme.keygen()
+    try:
+        public_key, secret_key = generate_kem_keypair(alg)
+        ciphertext, original_secret = encapsulate(public_key, alg)
+        recovered_secret = decapsulate(ciphertext, secret_key, alg)
 
-    ciphertext, original_secret = scheme.encaps(public_key)
-    recovered_secret = scheme.decaps(private_key, ciphertext)
+    except Exception as e:
+        print(f"Error occurred while running {alg} demo: {e}")
+        return
 
-    print("ML-KEM key pair generated.")
+    print(f"{alg} key pair generated.")
     print("Shared secret encapsulated using public key.")
-    print("Shared secret recovered using private key.")
+    print(f"{alg} shared secret recovered using private key.")
     print("Secrets match:", original_secret == recovered_secret)
 
 
 def mldsa_demo():
-    print("\n--- ML-DSA-65 Post-Quantum Signature Demo ---")
+    alg = choose(DSA_ALGS)
+    if not alg:
+        return
 
-    scheme = next(s for s in SIG_SCHEMES if s.name == "ML-DSA-65")
+    print(f"\n--- {alg} Post-Quantum Signature Demo ---")
 
     message = b"Hello from the PQC project!"
 
-    private_key, public_key = scheme.keygen()
+    try:
+        public_key, secret_key = generate_dsa_keypair(alg)
+        signature = sign_message(message, secret_key, alg)
+        verified = verify_signature(message, signature, public_key, alg)
 
-    signature = scheme.sign(private_key, message)
-    verified = scheme.verify(public_key, signature, message)
+    except Exception as e:
+        print(f"Error occurred while running {alg} demo: {e}")
+        return
 
     print("Original message:", message.decode())
-    print("Post-quantum signature generated.")
+    print(f"{alg} signature generated.")
     print("Signature valid:", verified)
-
-
 
 
 def benchmark_demo():
@@ -132,7 +162,6 @@ def benchmark_demo():
     )
 
 
-
 def main():
     while True:
         print("\n===================================")
@@ -142,8 +171,8 @@ def main():
         print("2. RSA Digital Signature")
         print("3. ECDSA Digital Signature")
         print("4. AES-GCM Encryption")
-        print("5. ML-KEM-768 Post-Quantum Key Exchange")
-        print("6. ML-DSA-65 Post-Quantum Signature")
+        print("5. ML-KEM Post-Quantum Key Exchange")
+        print("6. ML-DSA Post-Quantum Signature")
         print("7. Compare Classical vs Post-Quantum Performance")
         print("8. Exit")
 
