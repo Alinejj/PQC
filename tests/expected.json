@@ -89,5 +89,16 @@
     {"line": 17, "algorithm": "MD5"},
     {"line": 20, "algorithm": "X25519"},
     {"line": 20, "algorithm": "ECDH P-256 (prime256v1)"}
+  ],
+  "tests/samples/blind_algorithms.py": [
+    {"line": 21, "algorithm": "ECB mode"},
+    {"line": 24, "algorithm": "HMAC"},
+    {"line": 24, "algorithm": "SHA-256"},
+    {"line": 27, "algorithm": "Diffie-Hellman"},
+    {"line": 30, "algorithm": "3DES/DES"},
+    {"line": 33, "algorithm": "RC4"},
+    {"line": 36, "algorithm": "bcrypt"},
+    {"line": 40, "algorithm": "Argon2"},
+    {"line": 43, "algorithm": "scrypt"}
   ]
 }

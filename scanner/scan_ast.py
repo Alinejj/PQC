@@ -51,6 +51,23 @@ def bound_names(tree):
     return names
 
 
+def instance_map(tree, aliases):
+    """Variables assigned from a directly imported class, like
+    `ph = PasswordHasher()`, mapped to the class's full name. A later
+    call such as `ph.hash(...)` can then be matched as
+    `argon2.PasswordHasher.hash(...)` even though the algorithm name is
+    not on that line."""
+    instances = {}
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name)
+                and node.value.func.id in aliases):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    instances[target.id] = aliases[node.value.func.id]
+    return instances
+
+
 def is_output_call(call):
     func = call.func
     if isinstance(func, ast.Name):
@@ -61,9 +78,16 @@ def is_output_call(call):
 
 
 class AliasResolver(ast.NodeTransformer):
-    def __init__(self, aliases, local_names):
+    def __init__(self, aliases, local_names, instances=None):
         self.aliases = aliases
         self.local_names = local_names
+        self.instances = instances or {}
+
+    def visit_Attribute(self, node):
+        if isinstance(node.value, ast.Name) and node.value.id in self.instances:
+            node.value = ast.parse(self.instances[node.value.id], mode="eval").body
+            return node
+        return self.generic_visit(node)
 
     def visit_Name(self, node):
         if node.id in self.aliases:
@@ -114,12 +138,15 @@ def scan_file_ast(path, rules):
         return None
 
     local_names = bound_names(tree) - imported_names(tree)
-    resolver = AliasResolver(build_alias_map(tree), local_names)
+    aliases = build_alias_map(tree)
+    resolver = AliasResolver(aliases, local_names, instance_map(tree, aliases))
     findings = []
 
     for node in ast.walk(tree):
         if not isinstance(node, (ast.stmt, ast.excepthandler)):
             continue
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            continue  # an import is not a use; the call site is reported
         if (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
                 and isinstance(node.value.value, str)):
             continue  # skip docstrings

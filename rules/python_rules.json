@@ -25,5 +25,9 @@
   {"id": "PQ-SIG-1", "pattern": "ML-?DSA|Dilithium|Falcon|SPHINCS|SLH-?DSA", "algorithm": "ML-DSA / post-quantum signature", "category": "asymmetric", "status": "safe", "replacement": "None needed (already post-quantum)"},
   {"id": "OQS-1", "pattern": "oqs\\.(Signature|KeyEncapsulation)", "algorithm": "liboqs post-quantum primitive", "category": "asymmetric", "status": "safe", "replacement": "None needed (already post-quantum)"},
   {"id": "RSA-PAD-1", "pattern": "padding\\.(OAEP|PSS)\\b", "algorithm": "RSA padding (OAEP/PSS)", "category": "asymmetric", "status": "vulnerable", "replacement": "ML-KEM (encryption) / ML-DSA (signatures)"},
-  {"id": "AESGCM-KEY-1", "pattern": "AESGCM\\.generate_key", "algorithm": "AES-GCM", "category": "symmetric", "status": "safe", "replacement": "None needed (use 256-bit keys)"}
+  {"id": "AESGCM-KEY-1", "pattern": "AESGCM\\.generate_key", "algorithm": "AES-GCM", "category": "symmetric", "status": "safe", "replacement": "None needed (use 256-bit keys)"},
+  {"id": "HMAC-1", "pattern": "hmac\\.(new|HMAC|digest)\\b", "algorithm": "HMAC", "category": "hash", "status": "safe", "replacement": "None needed (HMAC with SHA-256 or stronger stays secure against quantum attacks)"},
+  {"id": "BCRYPT-1", "pattern": "bcrypt\\.(hashpw|checkpw|kdf)\\b", "algorithm": "bcrypt", "category": "hash", "status": "safe", "replacement": "None needed (password hashing is not broken by Shor's algorithm)"},
+  {"id": "ARGON2-1", "pattern": "argon2\\.(PasswordHasher\\.(hash|verify)|low_level\\.hash_secret|hash_password)\\b", "algorithm": "Argon2", "category": "hash", "status": "safe", "replacement": "None needed (password hashing is not broken by Shor's algorithm)"},
+  {"id": "SCRYPT-1", "pattern": "hashlib\\.scrypt|\\bScrypt\\(", "algorithm": "scrypt", "category": "hash", "status": "safe", "replacement": "None needed (password hashing is not broken by Shor's algorithm)"}
 ]
