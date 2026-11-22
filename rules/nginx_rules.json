@@ -78,5 +78,13 @@
         "category": "symmetric",
         "status": "transitional",
         "replacement": "Set an explicit modern cipher policy instead of relying on the OpenSSL default"
+    },
+    {
+        "id": "NGINX-ML-KEM",
+        "pattern": "\\bssl_ecdh_curve\\s+[^;]*\\b(?:ML-KEM|Kyber|X25519MLKEM768|SecP256r1MLKEM768)\\b",
+        "algorithm": "ML-KEM / hybrid KEM",
+        "category": "key_exchange",
+        "status": "safe",
+        "replacement": "None needed; verify provider and deployment support"
     }
 ]
