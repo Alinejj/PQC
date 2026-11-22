@@ -42,17 +42,6 @@ python evaluate.py
 
 The first run on the decoy file exposed false positives from trailing comments, strings inside `print` calls, and methods or variables named after algorithms. The first run on `blind_algorithms.py` exposed missing rules for HMAC and the three password hashers, and a case where the Argon2 call names the algorithm only where the hasher object is created. The fixes were new rules, an AST pass that tracks variables created from imported classes, ignoring strings in `print` and logging calls, and no longer matching import statements.
 
-## How to run
-- Nothing beyond the Python standard library is needed. It was developed and tested on Python 3.13 on Windows.
-
-From the project root:
-
-```
-python main.py tests/samples/blind_decoys.py
-python main.py tests/samples/blind_structure.py
-python main.py tests/samples/blind_algorithms.py
-```
-
 ## Decisions made
 - Import statements are not reported as findings.
 - Strings inside `print` and logging calls are ignored, including a printed TLS group string.
