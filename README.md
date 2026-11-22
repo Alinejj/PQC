@@ -6,11 +6,13 @@ This project contains a detection engine + a demo application with two main part
 
 The Detection Engine: It reads Python source files and nginx and OpenSSL configuration files, finds cryptography that is either broken by quantum computers or already weak, and reports each finding with a recommended replacement. The report generator and demo app in the rest of the project are built on top of the output described here.
 
-Demo: The classical half implements AES-GCM, RSA and ECDSA with the `cryptography` package, and it serves three purposes in the project: it provides the classical security functions for the demo (sending an encrypted message and signing data), it is the classical side that the benchmark compares ML-KEM and ML-DSA against, and it gives the scanner real, working classical cryptography to find. The post-quantum half implements ML-KEM-768 (post-quantum key encapsulation and decapsulation) and ML-DSA-65 (post-quantum digital signature). Both can be accessed through a interactive command-line application; there is also performance benchmarking to compare the two.
-
-Comparison/Benchmarking: Measures how post-quantum algorithms compare to the classical algorithms they are meant to replace. It times key generation, key exchange and signing for each algorithm, measures the size of keys, ciphertexts and signatures, and saves the results as CSV and JSON for the final report and slides.
+Classical: The classical half implements AES-GCM, RSA and ECDSA with the `cryptography` package, and it serves three purposes in the project: it provides the classical security functions for the demo (sending an encrypted message and signing data), it is the classical side that the benchmark compares ML-KEM and ML-DSA against, and it gives the scanner real, working classical cryptography to find. The post-quantum half implements ML-KEM-768 (post-quantum key encapsulation and decapsulation) and ML-DSA-65 (post-quantum digital signature). 
 
 Post-Quantum Crypto Scheme Immplementation: Implements the post-quantum crypto schemes ML-KEM and ML-DSA via the `liboqs` library. ML-KEM establishes a shared secret between two communicating parties over an insecure network through the use of a key encapsulation mechanism (KEM). ML-DSA is a digital signature scheme, and a post-quantum alternative for classical schemes based on RSA and ECC.
+
+Demo: Both can be accessed through a interactive command-line application; there is also performance benchmarking to compare the two.
+
+Comparison/Benchmarking: Measures how post-quantum algorithms compare to the classical algorithms they are meant to replace. It times key generation, key exchange and signing for each algorithm, measures the size of keys, ciphertexts and signatures, and saves the results as CSV and JSON for the final report and slides.
 
 Independent testing: The blind test files provide an independent measurement of the scanner's accuracy on code it was not developed against. 
 
@@ -28,6 +30,14 @@ recorded in the ground truth table answer key, and the scanner output is scored 
 
 ## How to run
 
+**Prerequisites**:
+```
+pip install cryptography
+pip install liboqs-python
+pip install matplotlib
+```
+
+**Detection Engine**
 Nothing beyond the Python standard library is needed. It was developed and tested on Python 3.13 on Windows.
 
 From the project root:
@@ -47,6 +57,61 @@ tests\samples\ast_demo.py:7  [VULNERABLE] RSA -> ML-KEM (encryption) / ML-DSA (s
 ```
 
 A path that does not exist prints an error and exits with code 2, so a mistyped filename is never mistaken for a clean scan. By default the rule files are found relative to `main.py`, so the command works from any folder. The `--rules` flag points to a different rules file, which is then applied to Python files only. To save JSON output from Windows PowerShell, use `python main.py <target> --json | Out-File -Encoding utf8 findings.json`. Other Python code can skip the command line and call `scan_path(target, rules, config_rules)` from `scanner/walker.py` directly, which returns the `Finding` objects. The third argument is optional, so existing two-argument calls behave as before.
+
+**Classical + Demo App**
+*Main file:* `demo_app.py`
+The application provides a numbered command-line menu containing the following options:
+
+| Option | Feature                  | Description                                                         |
+| ------ | ------------------------ | ------------------------------------------------------------------- |
+| 1      | RSA Key Exchange         | Demonstrates RSA-based key encapsulation and recovery               |
+| 2      | RSA Digital Signature    | Generates and verifies an RSA digital signature                     |
+| 3      | ECDSA Digital Signature  | Generates and verifies an elliptic-curve digital signature          |
+| 4      | AES-GCM Encryption       | Encrypts and decrypts data using authenticated symmetric encryption |
+| 5      | ML-KEM-768               | Demonstrates post-quantum key encapsulation and decapsulation       |
+| 6      | ML-DSA-65                | Generates and verifies a post-quantum digital signature             |
+| 7      | Performance Benchmarking | Launches the classical and post-quantum benchmarking tool           |
+| 8      | Exit                     | Exits the application                                               |
+
+The application integrates existing cryptographic implementations into a single interactive interface.
+
+**Post-Quantum Algorithm Implementations**
+From the project root, run:
+```
+python PQC_service/pqc_demo.py
+```
+
+**Classical vs. Post-Quantum Benchmarking**
+The only required dependency is the `cryptography` package, version 50 or newer, which includes ML-KEM and ML-DSA through OpenSSL. It was developed and tested on Python 3.14 on Windows.
+
+If `liboqs-python` and the liboqs C library are also installed, the ML-KEM and ML-DSA entries use the demo app's `PQC_service` code instead. liboqs has to be built from source, which needs CMake and a C compiler; without it the benchmark falls back to the `cryptography` versions. The program prints which one it used.
+
+From the project root:
+```
+python benchmark.py
+python benchmark.py --only ML-DSA
+python benchmark.py --iterations 100
+python benchmark.py --help
+```
+
+The first runs every algorithm with 10 timed runs per operation, the second runs only the algorithms whose name contains `ML-DSA`, and the third does a longer, more stable run. Other flags are `--warmup` (untimed runs before timing, default 5), `--message-size` (bytes in the signed message, default 1024) and `--out` (output folder, default `benchmarks/results`).
+The program prints a timing table and a size table, then writes three files to the output folder: `timings.csv`, `sizes.csv`, and `results.json`, which also records the machine, the Python, cryptography and OpenSSL versions, and whether ML-KEM and ML-DSA came from liboqs or cryptography. The results folder is in `.gitignore` so test runs are not committed. The final 100-iteration run reported below is kept separately in `benchmarks/final_results`.
+
+To draw charts from a results folder:
+```
+python benchmark.py --iterations 100 --out benchmarks/final_results
+python benchmarks/plot.py benchmarks/final_results
+```
+
+This writes `timings_kem.png`, `timings_sig.png`, `sizes_kem.png` and `sizes_sig.png` into the same folder. Timings are drawn as the median on a log scale, because they range from about 15 µs to over 300 ms.
+
+**Independent Testing**
+From the project root:
+```
+python main.py tests/samples/blind_decoys.py
+python main.py tests/samples/blind_structure.py
+python main.py tests/samples/blind_algorithms.py
+```
 
 ## Project layout
 
