@@ -14,10 +14,17 @@ Post-Quantum Crypto Scheme Immplementation: Implements the post-quantum crypto s
 
 Independent testing: The blind test files provide an independent measurement of the scanner's accuracy on code it was not developed against. 
 
-
 ## Why this exists
 
 A 2026 empirical study of open-source cryptographic discovery tools (Olewinski, Sandler and Ebinger, ARES 2026 Workshops) found that none of the tools tested caught more than 13 of 30 known crypto assets in a controlled test, and that symmetric ciphers, hash functions and key-exchange groups were missed by all of them. This scanner targets those gaps on purpose. The rules cover symmetric ciphers (AES modes, 3DES, Blowfish, RC4, ChaCha20, Fernet), hash functions (MD5, SHA-1, SHA-2, SHA-3, BLAKE2), key-exchange groups including hybrid post-quantum ones like `X25519MLKEM768`, post-quantum signatures and liboqs calls, and legacy TLS protocol constants.
+
+We also compared classical and post-quantum algorithms to show weaknesses in the classical algorithms. RSA and elliptic-curve algorithms (classical algorithms) such as ECDSA are the public-key cryptography that Shor's algorithm breaks, so they are what a post-quantum migration replaces: ML-KEM takes over RSA's job of delivering keys, and ML-DSA takes over signing. For the comparison to be fair, the classical side has to be built the way a careful developer would build it today, with modern padding, authenticated encryption and fresh random values. Then any difference the project measures comes from the algorithms themselves rather than from implementation mistakes, and the scanner's findings show that even well-built classical cryptography is quantum-vulnerable.
+AES is also included because both sides need it. A key exchange, classical or post-quantum, only delivers a shared secret; AES is what actually encrypts the message with that secret. AES is not replaced in the migration, since 256-bit AES keys are expected to stay secure against quantum computers.
+
+Additionally, migrating to post-quantum cryptography is not free. ML-KEM and ML-DSA have much larger keys and signatures than RSA or elliptic curves, and the cost in speed is not obvious without measuring it. This benchmark puts numbers on those tradeoffs so the project can say concretely what a migration costs.
+
+Lastly, we need blind files because the base ground truth test files' results show that detection gaps were found and fixed but they do not measure how well the scanner performs on unfamiliar code. These test files were written without knowledge of the 'rules/python_rules.json' file. Each test has an expected result 
+recorded in the ground truth table answer key, and the scanner output is scored against it as a match, miss, mislabel, or false positive.
 
 ## How to run
 
