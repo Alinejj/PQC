@@ -30,4 +30,4 @@ python main.py tests/samples/blind_algorithms.py
 ```
 
 ### Open questions
-Whether an unused import should be reported; how HMAC and password hashers should be categorized; whether a printed TLS group string should be reported.
+Whether an unused import should be reported; whether a printed TLS group string should be reported.
