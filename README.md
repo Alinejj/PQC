@@ -58,7 +58,10 @@ tests\samples\ast_demo.py:7  [VULNERABLE] RSA -> ML-KEM (encryption) / ML-DSA (s
 
 A path that does not exist prints an error and exits with code 2, so a mistyped filename is never mistaken for a clean scan. By default the rule files are found relative to `main.py`, so the command works from any folder. The `--rules` flag points to a different rules file, which is then applied to Python files only. To save JSON output from Windows PowerShell, use `python main.py <target> --json | Out-File -Encoding utf8 findings.json`. Other Python code can skip the command line and call `scan_path(target, rules, config_rules)` from `scanner/walker.py` directly, which returns the `Finding` objects. The third argument is optional, so existing two-argument calls behave as before.
 
-**Classical + Demo App**
+**Classical**
+The classical implementation in `classical.py` provides AES-GCM encryption, RSA key encapsulation and signatures, and ECDSA signatures. These implementations are used by the demo application and the classical side of the benchmark.
+
+**Demo App**
 *Main file:* `demo_app.py`
 The application provides a numbered command-line menu containing the following options:
 
@@ -115,9 +118,11 @@ python main.py tests/samples/blind_algorithms.py
 
 ## Project layout
 
+**Detection Engine**:
 ```
 main.py                    command-line entry point
-evaluate.py                scores the scanner against tests/expected.json
+evaluate.py                scores scanner findings against tests/expected.json
+report_generator.py        prints a readable security report from Finding objects
 scanner/
     finding.py             the Finding dataclass (shared output format)
     rules.py               loads and validates a rules JSON
@@ -126,11 +131,72 @@ scanner/
     walker.py              chooses rules by file type, runs the passes, walks folders
 rules/
     python_rules.json      Python detection rules (27 rules)
-    nginx_rules.json       nginx configuration rules (written by a teammate)
-    openssl_rules.json     OpenSSL configuration rules (written by a teammate)
+    nginx_rules.json       nginx configuration rules
+    openssl_rules.json     OpenSSL configuration rules
 tests/
     expected.json          answer key for the scored sample files
-    samples/               Python and config files used to measure detection
+    test_report_generator.py
+                           unit tests for report generation
+    test_demo_app.py       unit tests for the demo application
+    samples/
+        ast_demo.py        basic AST detection sample
+        ast_headers.py     crypto in decorators, defaults and block headers
+        blind_decoys.py    independently supplied non-crypto decoys
+        blind_structure.py independently supplied code with varied structures
+        blind_algorithms.py
+                           independently supplied algorithm coverage sample
+        gap_test.py        algorithm and syntax gaps
+        ground_truth_demo.py
+                           16 known cryptographic assets
+        new_rules.py       post-quantum and RSA-padding rules
+        nginx_demo.conf    nginx configuration sample
+        openssl_demo.cnf   OpenSSL configuration sample
+        crypto_demo.py     additional cryptography sample
+```
+
+**Classical**
+```
+classical.py               RSA, ECDSA and AES-GCM implementations
+```
+
+**Demo App**
+```
+demo_app.py                interactive command-line menu for classical and PQC demos
+```
+
+**Post-Quantum Algorithm Implementations**
+```
+PQC_service                service module imported by the demo application
+    mldsa.py               implementation of the ML-DSA scheme
+        generate_dsa_keypair        Generates a keypair for the specified signature algorithm
+        sign_message                Signs a message with the specified signature algorithm and secret key
+        verify_signature            Verifies signature with the specified signature algorithm and public key
+    mlkem.py               implementation of the ML-KEM scheme
+        generate_kem_keypair        Generate a keypair for the specified KEM algorithm
+        encapsulate                 Returns ciphertext and shared secret
+        decapsulate                 Returns shared secret
+    pqc_demo.py            standalone test script for ML-KEM and ML-DSA
+```
+
+**Classical vs. Post-Quantum Benchmarking**
+```
+benchmark.py               command-line entry point
+benchmarks/
+    schemes.py             the KEMScheme and SigScheme shapes every algorithm fills in
+    algorithms.py          the algorithms being compared
+    runner.py              timing, correctness checks and size measurement
+    plot.py                draws the charts from timings.csv and sizes.csv
+    final_results/         the 100-iteration run and charts used in the final report
+```
+
+**Independent Testing**
+```
+tests/
+    expected.json              answer key for the evaluated sample files
+    samples/
+        blind_structure.py     independent code-structure coverage test
+        blind_decoys.py        independent false-positive/decoy test
+        blind_algorithms.py    independent algorithm-coverage test
 ```
 
 ## The Finding format
