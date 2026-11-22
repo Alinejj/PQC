@@ -109,11 +109,14 @@ python benchmarks/plot.py benchmarks/final_results
 This writes `timings_kem.png`, `timings_sig.png`, `sizes_kem.png` and `sizes_sig.png` into the same folder. Timings are drawn as the median on a log scale, because they range from about 15 µs to over 300 ms.
 
 **Independent Testing**
+The answer key is the `Ground-Truth Table Expanded.xlsx` workbook, with the expected findings represented by test ID, file, line, expected algorithm, category, status and replacement. The PDF view is [Ground-Truth-Table(PDF).pdf](./Ground-Truth-Table.pdf). The findings used to score the scanner are also recorded in `tests/expected.json`.
+
 From the project root:
 ```
 python main.py tests/samples/blind_decoys.py
 python main.py tests/samples/blind_structure.py
 python main.py tests/samples/blind_algorithms.py
+python evaluate.py
 ```
 
 ## Project layout
@@ -191,6 +194,9 @@ benchmarks/
 
 **Independent Testing**
 ```
+Ground-Truth Table Expanded.xlsx
+                           expanded ground-truth answer key
+Ground-Truth-Table.pdf      PDF version of the expanded ground-truth table
 tests/
     expected.json              answer key for the evaluated sample files
     samples/
