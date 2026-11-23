@@ -8,9 +8,9 @@ The Detection Engine: It reads Python source files and nginx and OpenSSL configu
 
 Classical: The classical half implements AES-GCM, RSA and ECDSA with the `cryptography` package, and it serves three purposes in the project: it provides the classical security functions for the demo (sending an encrypted message and signing data), it is the classical side that the benchmark compares ML-KEM and ML-DSA against, and it gives the scanner real, working classical cryptography to find. The post-quantum half implements ML-KEM-768 (post-quantum key encapsulation and decapsulation) and ML-DSA-65 (post-quantum digital signature). 
 
-Post-Quantum Crypto Scheme Immplementation: Implements the post-quantum crypto schemes ML-KEM and ML-DSA via the `liboqs` library. ML-KEM establishes a shared secret between two communicating parties over an insecure network through the use of a key encapsulation mechanism (KEM). ML-DSA is a digital signature scheme, and a post-quantum alternative for classical schemes based on RSA and ECC.
+Post-Quantum Crypto Scheme Implementation: Implements the post-quantum crypto schemes ML-KEM and ML-DSA via the `liboqs` library. ML-KEM establishes a shared secret between two communicating parties over an insecure network through the use of a key encapsulation mechanism (KEM). ML-DSA is a digital signature scheme, and a post-quantum alternative for classical schemes based on RSA and ECC.
 
-Demo: Both can be accessed through a interactive command-line application; there is also performance benchmarking to compare the two.
+Demo: Both can be accessed through an interactive command-line application; there is also performance benchmarking to compare the two.
 
 Comparison/Benchmarking: Measures how post-quantum algorithms compare to the classical algorithms they are meant to replace. It times key generation, key exchange and signing for each algorithm, measures the size of keys, ciphertexts and signatures, and saves the results as CSV and JSON for the final report and slides.
 
@@ -33,12 +33,14 @@ recorded in the ground truth table answer key, and the scanner output is scored 
 **Prerequisites**:
 ```
 pip install cryptography
-pip install liboqs-python
 pip install matplotlib
+pip install liboqs-python
 ```
 
+`cryptography` is needed for the demo app and the benchmark. `matplotlib` is only needed to draw benchmark charts. `liboqs-python` is only needed for the demo app and `PQC_service`. It builds the liboqs C library from source the first time it is imported, which needs git, CMake and a C compiler (on Windows, Build Tools for Visual Studio with the "Desktop development with C++" workload). Without it, `demo_app.py` stops at startup. The scanner (`main.py`), `evaluate.py` and the benchmark do not need it, because the benchmark falls back to the `cryptography` library.
+
 **Detection Engine**
-Nothing beyond the Python standard library is needed. It was developed and tested on Python 3.13 on Windows.
+Nothing beyond the Python standard library is needed. It was developed and tested on Python 3.13 on Windows. The final benchmark run used Python 3.14.
 
 From the project root:
 
@@ -102,11 +104,11 @@ The program prints a timing table and a size table, then writes three files to t
 
 To draw charts from a results folder:
 ```
-python benchmark.py --iterations 100 --out benchmarks/final_results
-python benchmarks/plot.py benchmarks/final_results
+python benchmark.py --iterations 100 --out benchmarks/my_run
+python benchmarks/plot.py benchmarks/my_run
 ```
 
-This writes `timings_kem.png`, `timings_sig.png`, `sizes_kem.png` and `sizes_sig.png` into the same folder. Timings are drawn as the median on a log scale, because they range from about 15 µs to over 300 ms.
+This writes `timings_kem.png`, `timings_sig.png`, `sizes_kem.png` and `sizes_sig.png` into the same folder. Timings are drawn as the median on a log scale, because they range from about 15 µs to over 300 ms. Do not use `benchmarks/final_results` as the output folder, since it holds the final run reported below and a new run would overwrite it.
 
 **Independent Testing**
 The answer key is the `Ground-Truth Table Expanded.xlsx` workbook, with the expected findings represented by test ID, file, line, expected algorithm, category, status and replacement. The PDF view is [Ground-Truth-Table.pdf](./Ground-Truth-Table.pdf). The findings used to score the scanner are also recorded in `tests/expected.json`.
@@ -118,6 +120,14 @@ python main.py tests/samples/blind_structure.py
 python main.py tests/samples/blind_algorithms.py
 python evaluate.py
 ```
+
+**Unit tests**
+From the project root:
+```
+python -m unittest tests/test_report_generator.py tests/test_demo_app.py
+```
+
+`test_report_generator.py` (3 tests) checks the security report output. `test_demo_app.py` (7 tests) checks the demo app, and it needs liboqs because the demo app imports `PQC_service`.
 
 ## Project layout
 
@@ -133,7 +143,7 @@ scanner/
     scan_ast.py            syntax-tree pass using Python's ast module
     walker.py              chooses rules by file type, runs the passes, walks folders
 rules/
-    python_rules.json      Python detection rules (27 rules)
+    python_rules.json      Python detection rules (31 rules)
     nginx_rules.json       nginx configuration rules
     openssl_rules.json     OpenSSL configuration rules
 tests/
@@ -220,19 +230,48 @@ TOTAL
 
 On `ground_truth_demo.py`, a file of 16 known crypto assets modeled on the test file in the paper, the first version of the rules found 10 of 16 and mislabeled 3DES as AES-CBC on one line. After adding rules for AES-GCM, SHA-256, SHA-512, P-256 and the bare `X25519` group, and tightening the CBC rule to require AES, the scanner finds all 16. On `ast_demo.py`, the regex pass alone reported one finding, a false positive from a comment, and missed all four real ones. The AST pass found the four and ignored the comment. On `gap_test.py`, 11 assets in forms the first rules did not cover, the scanner found 2 of 11 before the rules were extended and 11 of 11 after. These two files were written after the rules existed, so they target known gaps rather than testing blind. `new_rules.py` (post-quantum signatures, liboqs, RSA padding) and `ast_headers.py` (crypto in decorators, default arguments and block headers) are in the same category.
 
-Three files were written independently by a teammate who had not seen the rules. `blind_structure.py` (7 assets in different code structures) scored 7 of 7. `blind_decoys.py` contains 9 lines that look like crypto but are not (a trailing comment, strings inside `print`, and methods or variables that merely share a name with a crypto function), so the right answer is zero findings. The first scoring run reported 9 false positives on it, because the regex pass could not tell code from text and the AST pass did not skip string messages or locally defined names. The fixes described above bring it to zero. Since those fixes were designed after seeing this result, the decoy score shows the problem was understood and fixed, but it is not a blind measurement. A fresh set of decoys would be needed to know how well the fix generalizes. The third file, `blind_algorithms.py`, covers algorithms the rules were not built around and was added after the answer key was scored, so it is not in `tests/expected.json` and not in the totals below. It lists 9 expected findings. The scanner found 5 (AES-ECB, SHA-256, Diffie-Hellman, DES and RC4) and missed 4 (HMAC, bcrypt, Argon2 and scrypt), because there are no rules for them. It also reported RC4 on the line that imports `ARC4`, which a strict line-by-line score would count as a false positive. This is the first result on code written without knowledge of the rules, and it shows a rule-coverage gap rather than a parsing problem.
+Three files were written independently by a teammate who had not seen the rules. `blind_structure.py` (7 assets in different code structures) scored 7 of 7. `blind_decoys.py` contains 9 lines that look like crypto but are not (a trailing comment, strings inside `print`, and methods or variables that merely share a name with a crypto function), so the right answer is zero findings. The first scoring run reported 9 false positives on it, because the regex pass could not tell code from text and the AST pass did not skip string messages or locally defined names. The fixes described above bring it to zero. Since those fixes were designed after seeing this result, the decoy score shows the problem was understood and fixed, but it is not a blind measurement. A fresh set of decoys would be needed to know how well the fix generalizes. The third file, `blind_algorithms.py`, covers algorithms the rules were not built around: HMAC, Diffie-Hellman, DES, RC4 and three password hashers. It lists 9 expected findings. The first scan found 5 (AES-ECB, SHA-256, Diffie-Hellman, DES and RC4) and missed 4 (HMAC, bcrypt, Argon2 and scrypt), because there were no rules for them. It also reported RC4 on the line that imports `ARC4`, which counted as a false positive. We then added four rules, made the AST pass follow variables created from imported classes (needed for the Argon2 call, where the name appears only on the line that creates the object), and stopped matching on import statements. The file now scores 9 of 9 with no false positives and is part of the answer key. Because those changes were made after seeing the first result, the final score is not a blind measurement, and the first-run result of 5 of 9 is the honest figure for how the rules generalize.
 
-Config files are scored on two samples (`nginx_demo.conf` and `openssl_demo.cnf`, 21 expected findings, including traps such as a commented-out setting). The current nginx and OpenSSL rules cover those samples without false positives. ML-KEM/hybrid nginx curves, SHA-1 cipher names such as `AES128-CBC-SHA`, and TLS 1.3 suites using SHA-384 are all detected.
+Config files are scored on two samples (`nginx_demo.conf` and `openssl_demo.cnf`, 21 expected findings, including traps such as a commented-out setting). The first run found 18 of 21. The three misses were gaps in the rule files, not in the scanner: no nginx rule for the ML-KEM hybrid group, no OpenSSL rule for SHA-1 in cipher names such as `AES128-CBC-SHA`, and a TLS 1.3 rule that did not match `TLS_AES_256_GCM_SHA384`. The rules were extended after these results, and the scanner now finds all 21 with no false positives. Because the rules were written after seeing the misses, this shows the gaps were fixed, not how the rules do on new configuration files.
 
-Overall, `evaluate.py` currently reports 74 expected findings, 74 matched, no missed findings, no mislabels and no false positives.
+Overall, `evaluate.py` currently reports 83 expected findings, 83 matched, no missed findings, no mislabels and no false positives.
 
 **Classical**
+`classical.py` is also a sample the scanner reads. `python main.py classical.py` reports 15 findings: 6 vulnerable (RSA key exchange, RSA padding and ECDSA) and 9 safe (AES-GCM and SHA-256).
 
 **Post-Quantum Algorithm Implementations**
+`python PQC_service/pqc_demo.py` runs one ML-KEM key exchange and one ML-DSA signature. It prints `Shared secrets match.` when both sides derive the same secret and `Signature is valid.` when the signature verifies. The key, ciphertext and signature sizes for each parameter set are in the benchmark table below.
 
 **Demo App**
+Ten automated tests cover the demo app (7 tests in `tests/test_demo_app.py`) and the report generator (3 tests in `tests/test_report_generator.py`). On `ground_truth_demo.py`, the report generator summarizes 16 findings: 7 vulnerable, 3 weak, 1 transitional and 5 safe.
 
 **Classical vs. Post-Quantum Benchmarking**
+The final run used 100 timed runs per operation. It ran on Windows 11 with Python 3.14.6, `cryptography` 50.0.2 (OpenSSL 4.0.3), and the `cryptography` backend for ML-KEM and ML-DSA. The raw data and charts are in `benchmarks/final_results`. All timings below are medians in microseconds.
+
+Key exchange:
+
+| Scheme | Keygen | Encaps | Decaps | Public key (bytes) | Ciphertext (bytes) |
+|---|---|---|---|---|---|
+| RSA-2048 (OAEP) | 57,466 | 21.8 | 797.7 | 270 | 256 |
+| RSA-3072 (OAEP) | 230,252 | 42.3 | 1,930.7 | 398 | 384 |
+| ECDH X25519 | 25.7 | 56.9 | 31.7 | 32 | 32 |
+| ECDH P-256 | 15.4 | 68.1 | 100.5 | 65 | 65 |
+| ML-KEM-768 | 228.2 | 51.5 | 76.5 | 1,184 | 1,088 |
+| ML-KEM-1024 | 314.3 | 52.5 | 101.9 | 1,568 | 1,568 |
+
+Signatures:
+
+| Scheme | Keygen | Sign | Verify | Public key (bytes) | Signature (bytes) |
+|---|---|---|---|---|---|
+| RSA-2048 (PSS) | 63,459 | 1,496.3 | 55.7 | 270 | 256 |
+| RSA-3072 (PSS) | 324,417 | 5,023.9 | 111.8 | 398 | 384 |
+| ECDSA P-256 | 30.9 | 54.2 | 130.8 | 65 | 70 |
+| Ed25519 | 53.8 | 48.8 | 128.8 | 32 | 64 |
+| ML-DSA-44 | 174.8 | 718.4 | 159.0 | 1,312 | 2,420 |
+| ML-DSA-65 | 306.9 | 1,009.6 | 263.0 | 1,952 | 3,309 |
+| ML-DSA-87 | 426.4 | 1,342.2 | 454.9 | 2,592 | 4,627 |
+
+ML-KEM-768 key generation (228 µs) is about 250 times faster than RSA-2048 (57,466 µs) and close to the elliptic-curve schemes. The cost is in size: an ML-KEM-768 public key is 1,184 bytes against 32 for X25519, about 37 times larger. ML-DSA-65 signs in about 1.0 ms, roughly 21 times slower than Ed25519 (48.8 µs) but faster than RSA-2048 (1.5 ms), and its signature is 3,309 bytes against 64 for Ed25519.
 
 **Independent Testing**
 | File | Expected | First run | After rule and scanner changes |
@@ -250,14 +289,14 @@ The first run on the decoy file exposed false positives from trailing comments, 
 A statement that spans several lines is reported at the line where it starts. Detection is by name, so a rule cannot tell the key size and cannot tell whether a variable holding an algorithm name is actually used. Algorithm names passed in as variables or built as strings at runtime are not detected. Blanking string arguments to `print` and logging calls means crypto that is only named in an output message is not reported, which is intended, but a real use hidden inside such a call would be missed. A name that a file both imports and reassigns is treated as the library. Config files only get the regex pass, and the `.conf` and `.cnf` extension convention can misclassify an unrelated file with those extensions. A file that cannot be parsed falls back to the regex pass, which does not understand comments at the end of a code line.
 
 **Classical**
-Keys exist only in memory. There is no saving or loading of keys to files and no password protection, which a real application would need. There is also no user-facing application yet; the module provides the building blocks (an encrypted message and signatures) that a demo would call. Messages must be bytes, so text needs `.encode()` first. Nothing stops a caller from using the same RSA key pair for both encryption and signing, though separate pairs are the recommended practice. Random 12-byte nonces are safe at this project's scale; NIST guidance caps random nonces at about four billion messages per key. AES is not part of the benchmark, since it is identical on the classical and post-quantum sides.
+Keys exist only in memory. There is no saving or loading of keys to files and no password protection, which a real application would need. Messages must be bytes, so text needs `.encode()` first. Nothing stops a caller from using the same RSA key pair for both encryption and signing, though separate pairs are the recommended practice. Random 12-byte nonces are safe at this project's scale; NIST guidance caps random nonces at about four billion messages per key. AES is not part of the benchmark, since it is identical on the classical and post-quantum sides.
 
 **Post-Quantum Algorithm Implementations**
 ML-KEM and ML-DSA both have larger key and signature sizes than their classical counterparts, which can increase storage, bandwidth, and impact processing efficiency. Due to the complexity of their implementation, they are typically more difficult to protect against side-channel attacks, such as timing and power analysis attacks. The lattice-based math required to design these schemes is currently an active field of research, and confidence in them may be impacted by future findings.
 
 **Demo App**
 - The demo is intended for educational use rather than production cryptographic key management.
-- The demo requires a compatible version of the `cryptography` library with ML-KEM and ML-DSA support.
+- The demo app requires liboqs (through `liboqs-python`) because `PQC_service` imports it directly. liboqs builds from source on first use and needs CMake and a C compiler, so without it `demo_app.py` stops at startup. The benchmark does not have this requirement.
 - Benchmark results vary by hardware and runtime conditions.
 - The report generator relies on the scanner's detection accuracy and configured rules.
 - Automated tests verify the individual demo operations but do not constitute a complete security audit.
@@ -266,3 +305,4 @@ ML-KEM and ML-DSA both have larger key and signature sizes than their classical 
 Timings depend on the machine, so they should only be compared within the same run, not across different computers. Python adds some overhead to every call, which matters more for the fastest operations. The RSA and ECDSA entries run the demo app's `classical.py`, and ML-KEM and ML-DSA run its `PQC_service` when liboqs is installed, but ECDH and Ed25519 still use the benchmark's own code. liboqs and OpenSSL implement ML-KEM and ML-DSA differently, and in a short test inside a Linux container liboqs was several times faster, so results should say which backend was used and only be compared within the same backend. The final results above use the `cryptography` backend only. The results come from one laptop and one run, so the exact numbers will differ on other hardware, but the large gaps (RSA key generation, signature sizes) are far bigger than the run-to-run noise. Symmetric algorithms such as AES are not benchmarked, since Shor's algorithm does not break them and the project's comparison is about the public-key algorithms that need replacing.
 
 **Independent Testing**
+The three blind files were written by one teammate, so they are small and reflect one person's idea of unfamiliar code. The decoy and algorithm results were reached after fixes made in response to the first run, so only the first-run numbers (9 false positives on the decoys, 5 of 9 on `blind_algorithms.py`) measure how the scanner handles new code. The current rules have not been tested on a fresh set of blind files.
