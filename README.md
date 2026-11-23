@@ -240,7 +240,23 @@ Overall, `evaluate.py` currently reports 83 expected findings, 83 matched, no mi
 `classical.py` is also a sample the scanner reads. `python main.py classical.py` reports 15 findings: 6 vulnerable (RSA key exchange, RSA padding and ECDSA) and 9 safe (AES-GCM and SHA-256).
 
 **Post-Quantum Algorithm Implementations**
-`python PQC_service/pqc_demo.py` runs one ML-KEM key exchange and one ML-DSA signature. It prints `Shared secrets match.` when both sides derive the same secret and `Signature is valid.` when the signature verifies. The key, ciphertext and signature sizes for each parameter set are in the benchmark table below.
+`PQC_service` implements ML-KEM (512, 768, 1024) and ML-DSA (44, 65, 87) with liboqs. The demo app lets you pick any variant from a menu to test the implementation. In testing, every variant succeeded in the key exchange (both sides derived the same shared secret, printing `Secrets match: True`) and signing (valid signatures verified, printing `Signature valid: True`). Unsupported algorithm names raise a ValueError, while None, empty, or non-bytes keys/messages/signatures raise a TypeError. Key, ciphertext and signature sizes for ML-KEM-512/768/1024 and ML-DSA-44/65/87 are in the tables below.
+
+Sizes measured from `PQC_service` (liboqs), in bytes:
+
+| ML-KEM variant | Public key | Secret key | Ciphertext | Shared secret |
+|---|---|---|---|---|
+| ML-KEM-512 | 800 | 1,632 | 768 | 32 |
+| ML-KEM-768 | 1,184 | 2,400 | 1,088 | 32 |
+| ML-KEM-1024 | 1,568 | 3,168 | 1,568 | 32 |
+
+| ML-DSA variant | Public key | Secret key | Signature |
+|---|---|---|---|
+| ML-DSA-44 | 1,312 | 2,560 | 2,420 |
+| ML-DSA-65 | 1,952 | 4,032 | 3,309 |
+| ML-DSA-87 | 2,592 | 4,896 | 4,627 |
+
+The public key, ciphertext, and signature sizes match the entries in the benchmark table. ML-KEM-512 is included here, as the benchmark does not cover it.
 
 **Demo App**
 Ten automated tests cover the demo app (7 tests in `tests/test_demo_app.py`) and the report generator (3 tests in `tests/test_report_generator.py`). On `ground_truth_demo.py`, the report generator summarizes 16 findings: 7 vulnerable, 3 weak, 1 transitional and 5 safe.
